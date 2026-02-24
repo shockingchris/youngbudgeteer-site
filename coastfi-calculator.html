@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CoastFI Calculator — Young Budgeteer</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #efefef;
+      color: #222;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #0B7D67;
+      color: white;
+      padding: 36px 24px 28px;
+      text-align: center;
+    }
+
+    header h1 { font-size: 1.8rem; font-weight: 700; }
+    header p  { margin-top: 6px; opacity: 0.88; font-size: 1rem; }
+
+    .explainer {
+      background: #e8f5f2;
+      border-left: 4px solid #0B7D67;
+      border-radius: 0 6px 6px 0;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      font-size: 0.88rem;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    .explainer strong { color: #0B7D67; }
+
+    .calc-wrapper {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 28px 16px 60px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 24px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #0B7D67;
+      font-weight: 700;
+      margin-bottom: 18px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e8f5f2;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .three-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 600px) {
+      .two-col   { grid-template-columns: 1fr; }
+      .three-col { grid-template-columns: 1fr 1fr; }
+    }
+
+    .field { margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .input-wrap { position: relative; }
+
+    .input-wrap .pre,
+    .input-wrap .suf {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #999;
+      font-size: 0.88rem;
+      pointer-events: none;
+    }
+
+    .input-wrap .pre { left: 10px; }
+    .input-wrap .suf { right: 10px; }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1.5px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      color: #222;
+      transition: border-color 0.15s;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    input[type="number"]:focus { outline: none; border-color: #0B7D67; }
+
+    .has-pre input { padding-left: 24px; }
+    .has-suf input { padding-right: 32px; }
+
+    .hint { font-size: 0.75rem; color: #aaa; margin-top: 3px; }
+
+    /* Withdrawal rate slider (same as FIRE calc) */
+    .wr-widget {
+      background: #f0faf7;
+      border: 2px solid #0B7D67;
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+
+    .wr-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+
+    .wr-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #0B7D67;
+    }
+
+    .wr-display { display: flex; align-items: baseline; gap: 12px; }
+    .wr-rate { font-size: 2rem; font-weight: 800; color: #0B7D67; line-height: 1; }
+    .wr-multiplier { font-size: 1rem; font-weight: 600; color: #555; }
+
+    input[type="range"] {
+      width: 100%;
+      margin: 10px 0 6px;
+      -webkit-appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(to right, #0B7D67 0%, #0B7D67 40%, #ddd 40%);
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #0B7D67;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #0B7D67;
+      border: none;
+      cursor: pointer;
+    }
+
+    .wr-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: #aaa;
+      padding: 0 2px;
+    }
+
+    .calc-btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: #0B7D67;
+      color: white;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+      margin-bottom: 28px;
+    }
+
+    .calc-btn:hover { background: #096b57; }
+
+    .hidden { display: none; }
+
+    /* Progress */
+    .progress-section {
+      background: white;
+      border-radius: 10px;
+      padding: 22px 24px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      margin-bottom: 20px;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+
+    .progress-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #555;
+    }
+
+    .progress-pct { font-size: 1.1rem; font-weight: 800; color: #0B7D67; }
+
+    .progress-bar-track {
+      width: 100%;
+      height: 14px;
+      background: #e8f5f2;
+      border-radius: 7px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #0B7D67, #14a088);
+      border-radius: 7px;
+      transition: width 0.6s ease;
+    }
+
+    .progress-sub {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: #aaa;
+    }
+
+    /* Metrics */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .metric {
+      background: white;
+      border-radius: 10px;
+      padding: 18px 14px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      text-align: center;
+    }
+
+    .metric .mlabel {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #999;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .metric .mvalue {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #0B7D67;
+      line-height: 1.1;
+    }
+
+    .metric .msub { font-size: 0.72rem; color: #bbb; margin-top: 4px; }
+    .metric.accent .mvalue { color: #e07b39; }
+
+    /* Income comparison panel */
+    .income-panel {
+      background: white;
+      border-radius: 10px;
+      padding: 24px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      margin-bottom: 20px;
+    }
+
+    .income-panel h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #0B7D67;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e8f5f2;
+    }
+
+    .income-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 0.9rem;
+    }
+
+    .income-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+    .income-label { color: #555; }
+    .income-value { font-weight: 700; font-size: 1rem; color: #222; }
+    .income-value.green { color: #0B7D67; }
+    .income-value.save  { color: #0B7D67; font-size: 1.1rem; }
+
+    /* Chart */
+    .chart-card {
+      background: white;
+      border-radius: 10px;
+      padding: 24px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      margin-bottom: 20px;
+    }
+
+    .chart-card h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #0B7D67;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .chart-card p {
+      font-size: 0.78rem;
+      color: #aaa;
+      margin-bottom: 16px;
+    }
+
+    .chart-wrap { position: relative; height: 300px; }
+
+    /* Table */
+    .table-card {
+      background: white;
+      border-radius: 10px;
+      padding: 24px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      overflow-x: auto;
+    }
+
+    .table-card h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #0B7D67;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .table-card p {
+      font-size: 0.78rem;
+      color: #aaa;
+      margin-bottom: 16px;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+
+    thead tr { background: #0B7D67; color: white; }
+    thead th {
+      padding: 10px 14px;
+      text-align: right;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    thead th:first-child { text-align: center; }
+
+    tbody tr:nth-child(even) { background: #f7faf9; }
+    tbody tr.active-row { background: #e8f5f2 !important; font-weight: 600; }
+
+    tbody td {
+      padding: 10px 14px;
+      text-align: right;
+      border-bottom: 1px solid #eee;
+      white-space: nowrap;
+    }
+    tbody td:first-child { text-align: center; }
+
+    .tag {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      margin-left: 6px;
+      vertical-align: middle;
+      background: #0B7D67;
+      color: white;
+    }
+
+    .already-banner {
+      background: #e8f5f2;
+      border: 2px solid #0B7D67;
+      border-radius: 10px;
+      padding: 18px 22px;
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #0B7D67;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>CoastFI Calculator</h1>
+  <p>Find the number where you can stop saving — and let your investments do the rest.</p>
+</header>
+
+<div class="calc-wrapper">
+
+  <div class="explainer">
+    <strong>What is CoastFI?</strong> It's the point where your invested savings are large enough that,
+    even if you never contribute another dollar, they will compound on their own to your full FIRE number
+    by your target retirement age. Once you hit CoastFI, you only need to earn enough to cover your
+    living expenses — no more saving required. That means you could work part-time, switch to a
+    lower-paying job you enjoy, or just have much more breathing room.
+  </div>
+
+  <!-- Withdrawal Rate Widget -->
+  <div class="wr-widget">
+    <div class="wr-top">
+      <span class="wr-label">Safe Withdrawal Rate at Retirement</span>
+      <div class="wr-display">
+        <span class="wr-rate" id="wrDisplay">4.0%</span>
+        <span class="wr-multiplier" id="wrMultiplier">= save 25x expenses</span>
+      </div>
+    </div>
+    <input type="range" id="withdrawalRate" min="2" max="8" step="0.1" value="4"
+           oninput="updateWR()">
+    <div class="wr-ticks">
+      <span>2%</span><span>3%</span><span>4%</span><span>5%</span><span>6%</span><span>7%</span><span>8%</span>
+    </div>
+  </div>
+
+  <!-- Inputs -->
+  <div class="card">
+    <h2>Your Numbers</h2>
+    <div class="two-col">
+      <div class="field">
+        <label for="annualExpenses">Annual Expenses in Retirement</label>
+        <div class="input-wrap has-pre">
+          <span class="pre">$</span>
+          <input type="number" id="annualExpenses" value="50000" min="0">
+        </div>
+        <div class="hint">What you plan to spend each year in retirement</div>
+      </div>
+      <div class="field">
+        <label for="currentExpenses">Current Annual Expenses</label>
+        <div class="input-wrap has-pre">
+          <span class="pre">$</span>
+          <input type="number" id="currentExpenses" value="60000" min="0">
+        </div>
+        <div class="hint">What you spend today (may differ from retirement)</div>
+      </div>
+      <div class="field">
+        <label for="currentSavings">Current Invested Assets</label>
+        <div class="input-wrap has-pre">
+          <span class="pre">$</span>
+          <input type="number" id="currentSavings" value="75000" min="0">
+        </div>
+        <div class="hint">401k, IRA, brokerage, etc.</div>
+      </div>
+      <div class="field">
+        <label for="monthlyContrib">Monthly Savings Contribution</label>
+        <div class="input-wrap has-pre">
+          <span class="pre">$</span>
+          <input type="number" id="monthlyContrib" value="1500" min="0">
+        </div>
+      </div>
+      <div class="field">
+        <label for="currentAge">Current Age</label>
+        <input type="number" id="currentAge" value="32" min="18" max="70">
+      </div>
+      <div class="field">
+        <label for="retirementAge">Target Retirement Age</label>
+        <input type="number" id="retirementAge" value="55" min="30" max="75">
+        <div class="hint">When you want to stop working entirely</div>
+      </div>
+      <div class="field">
+        <label for="annualReturn">Expected Annual Return</label>
+        <div class="input-wrap has-suf">
+          <input type="number" id="annualReturn" value="7" min="0" max="20" step="0.1">
+          <span class="suf">%</span>
+        </div>
+        <div class="hint">Real (inflation-adjusted). ~7% is typical for stocks.</div>
+      </div>
+      <div class="field">
+        <label for="passiveIncome">Monthly Passive Income (optional)</label>
+        <div class="input-wrap has-pre">
+          <span class="pre">$</span>
+          <input type="number" id="passiveIncome" value="0" min="0">
+        </div>
+        <div class="hint">Rental income, dividends, side income, etc.</div>
+      </div>
+      <div class="field">
+        <label for="retirementPassive">Monthly Passive Income in Retirement</label>
+        <div class="input-wrap has-pre">
+          <span class="pre">$</span>
+          <input type="number" id="retirementPassive" value="0" min="0">
+        </div>
+        <div class="hint">If this continues in retirement it reduces your FIRE number (leave 0 if unsure)</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="calc-btn" onclick="calculate()">Calculate My CoastFI Number</button>
+
+  <!-- Results -->
+  <div id="results" class="hidden">
+
+    <div id="alreadyCoastBanner" class="already-banner hidden"></div>
+
+    <div class="progress-section">
+      <div class="progress-header">
+        <span class="progress-title">Progress to CoastFI</span>
+        <span class="progress-pct" id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+      </div>
+      <div class="progress-sub">
+        <span id="progressCurrent"></span>
+        <span id="progressTarget"></span>
+      </div>
+    </div>
+
+    <div class="metrics-grid" id="metricsGrid"></div>
+
+    <!-- Income comparison -->
+    <div class="income-panel">
+      <h3>What Changes When You Hit CoastFI</h3>
+      <div class="income-row">
+        <span class="income-label">Income needed today (expenses + savings)</span>
+        <span class="income-value" id="incomeNow"></span>
+      </div>
+      <div class="income-row">
+        <span class="income-label">Passive income covering expenses</span>
+        <span class="income-value green" id="incomePassive"></span>
+      </div>
+      <div class="income-row">
+        <span class="income-label">Active income needed at CoastFI</span>
+        <span class="income-value green" id="incomeCoast"></span>
+      </div>
+      <div class="income-row">
+        <span class="income-label">Annual income freed up vs. today</span>
+        <span class="income-value save" id="incomeSaved"></span>
+      </div>
+    </div>
+
+    <!-- Semi-FIRE scenarios -->
+    <div class="income-panel">
+      <h3>Semi-FIRE: How Much Work Is Enough?</h3>
+      <p style="font-size:0.82rem;color:#888;margin-bottom:14px;">Once you hit CoastFI, you only need to cover expenses — not save. Here's how much active income you'd need to earn at different working levels.</p>
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:8px 14px;background:#0B7D67;color:white;font-size:0.82rem;">Scenario</th>
+            <th style="text-align:right;padding:8px 14px;background:#0B7D67;color:white;font-size:0.82rem;">Active Income Needed/yr</th>
+            <th style="text-align:right;padding:8px 14px;background:#0B7D67;color:white;font-size:0.82rem;">vs. Full-Time Today</th>
+          </tr>
+        </thead>
+        <tbody id="scenarioBody"></tbody>
+      </table>
+    </div>
+
+    <div class="chart-card">
+      <h3>Two Paths to the Same Retirement</h3>
+      <p>Aggressive savings reaches FIRE sooner. Coast path stops contributions at CoastFI and lets compounding do the work by retirement age.</p>
+      <div class="chart-wrap">
+        <canvas id="coastChart"></canvas>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <h3>CoastFI by Retirement Age</h3>
+      <p>Retiring later means you need less saved today — compounding has more time to work.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Retire at</th>
+            <th>Years to Grow</th>
+            <th>CoastFI Number</th>
+            <th>FIRE Number</th>
+            <th>Years to CoastFI</th>
+            <th>CoastFI Age</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  let chartInstance = null;
+
+  function $ (id) { return document.getElementById(id); }
+  function val(id) { return parseFloat($(id).value) || 0; }
+
+  function fmt(n) {
+    if (n >= 1000000) return '$' + (n / 1000000).toFixed(2) + 'M';
+    return '$' + Math.round(n).toLocaleString();
+  }
+
+  function fmtYears(y) {
+    if (y === null) return '>100 yr';
+    if (y <= 0)     return 'Now';
+    const yrs = Math.floor(y);
+    const mos = Math.round((y - yrs) * 12);
+    if (mos === 0) return yrs + ' yr';
+    if (yrs === 0) return mos + ' mo';
+    return yrs + ' yr ' + mos + ' mo';
+  }
+
+  function updateWR() {
+    const wr   = parseFloat($('withdrawalRate').value);
+    const mult = (100 / wr).toFixed(1);
+    $('wrDisplay').textContent    = wr.toFixed(1) + '%';
+    $('wrMultiplier').textContent = '= save ' + mult + 'x expenses';
+    const pctPos = ((wr - 2) / 6) * 100;
+    $('withdrawalRate').style.background =
+      `linear-gradient(to right, #0B7D67 0%, #0B7D67 ${pctPos}%, #ddd ${pctPos}%)`;
+  }
+
+  // Simulate month-by-month to find when portfolio reaches target
+  function monthsToReach(target, startBalance, monthlyContrib, monthlyReturn) {
+    if (startBalance >= target) return 0;
+    let p = startBalance;
+    for (let m = 1; m <= 1200; m++) {
+      p = p * (1 + monthlyReturn) + monthlyContrib;
+      if (p >= target) return m;
+    }
+    return null;
+  }
+
+  function calculate() {
+    const annualExpenses     = val('annualExpenses');
+    const currentExpenses    = val('currentExpenses');
+    const currentSavings     = val('currentSavings');
+    const monthlyContrib     = val('monthlyContrib');
+    const currentAge         = val('currentAge');
+    const retirementAge      = val('retirementAge');
+    const annualReturn       = val('annualReturn') / 100;
+    const withdrawalRate     = parseFloat($('withdrawalRate').value) / 100;
+    const monthlyReturn      = annualReturn / 12;
+    const passiveIncome      = val('passiveIncome');       // monthly, today
+    const retirementPassive  = val('retirementPassive');   // monthly, at retirement
+
+    const yearsToRetire   = retirementAge - currentAge;
+
+    // If passive income continues in retirement, it reduces the portfolio withdrawals needed
+    const annualRetirementPassive = retirementPassive * 12;
+    const netRetirementExpenses   = Math.max(0, annualExpenses - annualRetirementPassive);
+
+    // Core numbers
+    const fireNumber  = netRetirementExpenses / withdrawalRate;
+    // CoastFI Number = FIRE Number discounted back from retirement age
+    const coastNumber = fireNumber / Math.pow(1 + annualReturn, yearsToRetire);
+
+    const alreadyCoast = currentSavings >= coastNumber;
+    const alreadyFIRE  = currentSavings >= fireNumber;
+
+    // Time to CoastFI
+    const mosToCoast = alreadyCoast ? 0
+      : monthsToReach(coastNumber, currentSavings, monthlyContrib, monthlyReturn);
+    const yrsToCoast = mosToCoast === null ? null : mosToCoast / 12;
+    const coastAge   = mosToCoast === null ? null : currentAge + mosToCoast / 12;
+
+    // Years of coasting (work for expenses only) before retirement
+    const coastingYears = coastAge === null ? null : retirementAge - coastAge;
+
+    // Time to full FIRE without stopping contributions
+    const mosToFIRE = monthsToReach(fireNumber, currentSavings, monthlyContrib, monthlyReturn);
+    const yrsToFIRE = mosToFIRE === null ? null : mosToFIRE / 12;
+    const fireAge   = mosToFIRE === null ? null : currentAge + mosToFIRE / 12;
+
+    const progress  = Math.min(100, (currentSavings / coastNumber) * 100);
+
+    // Income comparison
+    const annualSavings       = monthlyContrib * 12;
+    const annualPassiveNow    = passiveIncome * 12;
+    const incomeNow           = currentExpenses + annualSavings;
+    const incomeAtCoast       = Math.max(0, currentExpenses - annualPassiveNow); // passive covers some expenses
+    const incomeFreed         = incomeNow - incomeAtCoast;
+
+    // Chart data: from current age to max(retirement age + 5, fireAge + 3)
+    const chartEndAge  = Math.max(retirementAge + 5, fireAge ? Math.ceil(fireAge) + 3 : retirementAge + 5);
+    const chartYears   = chartEndAge - currentAge;
+    const labels       = [];
+    const coastPath    = [];
+    const aggressivePath = [];
+
+    let pCoast = currentSavings;
+    let pAggr  = currentSavings;
+    let coastReached = alreadyCoast;
+    let fireReached  = alreadyFIRE;
+
+    labels.push('Age ' + Math.round(currentAge));
+    coastPath.push(Math.round(pCoast));
+    aggressivePath.push(Math.round(pAggr));
+
+    for (let y = 1; y <= chartYears; y++) {
+      const ageNow = currentAge + y;
+
+      for (let m = 0; m < 12; m++) {
+        // Coast path: contribute until coast number reached, then compound only
+        if (!coastReached) {
+          pCoast += pCoast * monthlyReturn + monthlyContrib;
+          if (pCoast >= coastNumber) coastReached = true;
+        } else {
+          pCoast *= (1 + monthlyReturn);
+        }
+
+        // Aggressive path: keep contributing until FIRE number
+        if (!fireReached) {
+          pAggr += pAggr * monthlyReturn + monthlyContrib;
+          if (pAggr >= fireNumber) fireReached = true;
+        } else {
+          pAggr *= (1 + monthlyReturn);
+        }
+      }
+
+      labels.push('Age ' + Math.round(ageNow));
+      coastPath.push(Math.round(Math.max(0, pCoast)));
+      aggressivePath.push(Math.round(Math.max(0, pAggr)));
+    }
+
+    // Retirement age comparison table
+    const retireAges = [];
+    for (let age = Math.max(currentAge + 5, 40); age <= 70; age += 5) {
+      retireAges.push(age);
+    }
+    if (!retireAges.includes(retirementAge)) {
+      retireAges.push(retirementAge);
+      retireAges.sort((a, b) => a - b);
+    }
+
+    const tableRows = retireAges.map(ra => {
+      const ytr  = ra - currentAge;
+      const fn   = annualExpenses / withdrawalRate;
+      const cn   = fn / Math.pow(1 + annualReturn, ytr);
+      const mos  = currentSavings >= cn ? 0 : monthsToReach(cn, currentSavings, monthlyContrib, monthlyReturn);
+      const yrs  = mos === null ? null : mos / 12;
+      const cage = yrs === null ? null : currentAge + yrs;
+      return { ra, ytr, fn, cn, yrs, cage };
+    });
+
+    render({
+      fireNumber, coastNumber, progress, alreadyCoast, alreadyFIRE,
+      yrsToCoast, coastAge, coastingYears,
+      yrsToFIRE, fireAge,
+      incomeNow, incomeAtCoast, incomeFreed,
+      annualPassiveNow, currentExpenses,
+      annualExpenses, currentSavings,
+      withdrawalRate, retirementAge, currentAge,
+      labels, coastPath, aggressivePath,
+      tableRows
+    });
+  }
+
+  function render(d) {
+    $('results').classList.remove('hidden');
+
+    // Banner
+    const banner = $('alreadyCoastBanner');
+    if (d.alreadyFIRE) {
+      banner.classList.remove('hidden');
+      banner.textContent = 'You have already reached your full FIRE number! You could retire today.';
+    } else if (d.alreadyCoast) {
+      banner.classList.remove('hidden');
+      banner.textContent = "You've already hit CoastFI! You no longer need to save for retirement — you just need to cover your living expenses until retirement age.";
+    } else {
+      banner.classList.add('hidden');
+    }
+
+    // Progress bar (toward CoastFI, not FIRE)
+    const pct = Math.round(d.progress);
+    $('progressPct').textContent  = pct + '%';
+    $('progressFill').style.width = pct + '%';
+    $('progressCurrent').textContent = 'Current: ' + fmt(d.currentSavings);
+    $('progressTarget').textContent  = 'CoastFI target: ' + fmt(d.coastNumber);
+
+    // Metric cards
+    const coastTimeText = d.alreadyCoast ? 'Already there!'
+      : d.yrsToCoast === null ? '>100 yr'
+      : fmtYears(d.yrsToCoast);
+
+    const coastAgeText = d.alreadyCoast ? d.currentAge + ' (now)'
+      : d.coastAge === null ? 'N/A'
+      : Math.round(d.coastAge);
+
+    const coastingText = d.coastingYears === null ? 'N/A'
+      : d.alreadyCoast ? Math.round(d.retirementAge - d.currentAge) + ' yr'
+      : Math.round(d.coastingYears) + ' yr';
+
+    const fireTimeText = d.yrsToFIRE === null ? '>100 yr' : fmtYears(d.yrsToFIRE);
+    const fireAgeText  = d.fireAge === null ? 'N/A' : Math.round(d.fireAge);
+
+    $('metricsGrid').innerHTML = `
+      <div class="metric">
+        <div class="mlabel">CoastFI Number</div>
+        <div class="mvalue">${fmt(d.coastNumber)}</div>
+        <div class="msub">Save this, then stop contributing</div>
+      </div>
+      <div class="metric accent">
+        <div class="mlabel">FIRE Number</div>
+        <div class="mvalue">${fmt(d.fireNumber)}</div>
+        <div class="msub">What you need at retirement age ${d.retirementAge}</div>
+      </div>
+      <div class="metric">
+        <div class="mlabel">Years to CoastFI</div>
+        <div class="mvalue">${coastTimeText}</div>
+        <div class="msub">At current savings rate</div>
+      </div>
+      <div class="metric">
+        <div class="mlabel">CoastFI Age</div>
+        <div class="mvalue">${coastAgeText}</div>
+        <div class="msub">When you can stop saving</div>
+      </div>
+      <div class="metric">
+        <div class="mlabel">Years of Coasting</div>
+        <div class="mvalue">${coastingText}</div>
+        <div class="msub">Working for expenses only</div>
+      </div>
+      <div class="metric">
+        <div class="mlabel">Full FIRE by Saving Hard</div>
+        <div class="mvalue">${fireTimeText}</div>
+        <div class="msub">Age ${fireAgeText} if you keep contributing</div>
+      </div>
+    `;
+
+    // Income panel
+    $('incomeNow').textContent     = fmt(d.incomeNow) + '/yr';
+    $('incomePassive').textContent = d.annualPassiveNow > 0
+      ? fmt(d.annualPassiveNow) + '/yr'
+      : 'None entered';
+    $('incomeCoast').textContent  = d.incomeAtCoast <= 0
+      ? 'Fully covered by passive income!'
+      : fmt(d.incomeAtCoast) + '/yr';
+    $('incomeSaved').textContent  = fmt(d.incomeFreed) + '/yr less needed';
+
+    // Semi-FIRE scenarios
+    const scenarios = [
+      { label: 'Full-time (baseline today)', income: d.incomeNow },
+      { label: 'Reduce savings, same expenses', income: d.currentExpenses },
+      { label: 'Part-time (cover expenses + some passive)', income: Math.round(d.currentExpenses * 0.75) },
+      { label: 'Barista / low-stress job', income: Math.round(d.currentExpenses * 0.5) },
+      { label: 'Minimal work (passive does the rest)', income: Math.max(0, d.incomeAtCoast) },
+    ];
+
+    $('scenarioBody').innerHTML = scenarios.map((s, i) => {
+      const diff     = s.income - d.incomeNow;
+      const diffText = diff === 0 ? '—'
+        : (diff < 0 ? '- ' + fmt(-diff) + '/yr' : '+ ' + fmt(diff) + '/yr');
+      const diffClass = diff < 0 ? 'style="color:#0B7D67;font-weight:600"' : '';
+      const rowStyle  = i === 0 ? 'style="background:#f7f7f7"' : '';
+      return `<tr ${rowStyle}>
+        <td style="text-align:left;padding:9px 14px;border-bottom:1px solid #eee;font-size:0.85rem">${s.label}</td>
+        <td style="text-align:right;padding:9px 14px;border-bottom:1px solid #eee;font-weight:600;font-size:0.85rem">${fmt(s.income)}</td>
+        <td ${diffClass} style="text-align:right;padding:9px 14px;border-bottom:1px solid #eee;font-size:0.85rem">${diffText}</td>
+      </tr>`;
+    }).join('');
+
+    // Chart
+    if (chartInstance) chartInstance.destroy();
+
+    const fireLineData = d.labels.map(() => Math.round(d.fireNumber));
+
+    chartInstance = new Chart($('coastChart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: d.labels,
+        datasets: [
+          {
+            label: 'Coast Path (stop saving at CoastFI)',
+            data: d.coastPath,
+            borderColor: '#0B7D67',
+            backgroundColor: 'rgba(11,125,103,0.07)',
+            borderWidth: 2.5,
+            pointRadius: 1,
+            tension: 0.3,
+            fill: true
+          },
+          {
+            label: 'Aggressive Path (keep saving)',
+            data: d.aggressivePath,
+            borderColor: '#6b8cba',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderDash: [4, 3],
+            pointRadius: 1,
+            tension: 0.3,
+            fill: false
+          },
+          {
+            label: 'FIRE Number',
+            data: fireLineData,
+            borderColor: '#e07b39',
+            borderWidth: 2,
+            borderDash: [6, 4],
+            pointRadius: 0,
+            fill: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top' },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString()}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            ticks: {
+              callback: v => {
+                if (v >= 1000000) return '$' + (v / 1000000).toFixed(1) + 'M';
+                if (v >= 1000)    return '$' + (v / 1000).toFixed(0) + 'k';
+                return '$' + v;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Table
+    $('tableBody').innerHTML = d.tableRows.map(row => {
+      const isSelected = row.ra === d.retirementAge;
+      return `<tr class="${isSelected ? 'active-row' : ''}">
+        <td>${row.ra}${isSelected ? '<span class="tag">Your pick</span>' : ''}</td>
+        <td>${row.ytr} yr</td>
+        <td>${fmt(row.cn)}</td>
+        <td>${fmt(row.fn)}</td>
+        <td>${fmtYears(row.yrs)}</td>
+        <td>${row.cage === null ? 'N/A' : Math.round(row.cage)}</td>
+      </tr>`;
+    }).join('');
+
+    $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  updateWR();
+</script>
+</body>
+</html>
