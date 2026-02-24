@@ -33,40 +33,53 @@
       opacity: 0.88;
     }
 
-    header a {
-      color: #a8f0e0;
-      text-decoration: none;
-    }
-
-    header a:hover {
-      text-decoration: underline;
-    }
+    header a { color: #a8f0e0; text-decoration: none; }
+    header a:hover { text-decoration: underline; }
 
     main {
       max-width: 700px;
       margin: 40px auto;
-      padding: 0 20px;
+      padding: 0 20px 20px;
     }
 
-    h2 {
-      font-size: 1rem;
+    .section {
+      margin-bottom: 36px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .section-header h2 {
+      font-size: 0.8rem;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #555;
-      margin-bottom: 16px;
+      letter-spacing: 0.1em;
+      color: #0B7D67;
+      font-weight: 700;
+    }
+
+    .section-header::after {
+      content: '';
+      flex: 1;
+      height: 2px;
+      background: #ddd;
+      border-radius: 1px;
     }
 
     .calculator-list {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     .calc-card {
       background: white;
       border-radius: 8px;
       border-left: 5px solid #0B7D67;
-      padding: 18px 20px;
+      padding: 16px 20px;
       text-decoration: none;
       color: inherit;
       display: flex;
@@ -82,13 +95,13 @@
     }
 
     .calc-info h3 {
-      font-size: 1rem;
+      font-size: 0.97rem;
       font-weight: 600;
       color: #111;
     }
 
     .calc-info p {
-      font-size: 0.875rem;
+      font-size: 0.845rem;
       color: #666;
       margin-top: 3px;
     }
@@ -102,19 +115,13 @@
 
     footer {
       text-align: center;
-      padding: 40px 20px 32px;
+      padding: 32px 20px 40px;
       font-size: 0.85rem;
       color: #888;
     }
 
-    footer a {
-      color: #0B7D67;
-      text-decoration: none;
-    }
-
-    footer a:hover {
-      text-decoration: underline;
-    }
+    footer a { color: #0B7D67; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -125,83 +132,117 @@
   </header>
 
   <main>
-    <h2>Available Calculators</h2>
 
-    <div class="calculator-list">
+    <!-- MORTGAGE & HOME -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Mortgage &amp; Home</h2>
+      </div>
+      <div class="calculator-list">
 
-      <a class="calc-card" href="mortgage-calculator.html">
-        <div class="calc-info">
-          <h3>Mortgage Calculator</h3>
-          <p>Estimate your monthly payment, total interest, and full amortization schedule.</p>
-        </div>
-        <span class="arrow">&#8250;</span>
-      </a>
+        <a class="calc-card" href="mortgage-calculator.html">
+          <div class="calc-info">
+            <h3>Mortgage Calculator</h3>
+            <p>Estimate your monthly payment, total interest, and full amortization schedule.</p>
+          </div>
+          <span class="arrow">&#8250;</span>
+        </a>
 
-      <a class="calc-card" href="mortgage-reamortization-calculator.html">
-        <div class="calc-info">
-          <h3>Mortgage Reamortization Calculator</h3>
-          <p>See how a lump-sum payment reduces your balance and shortens your loan.</p>
-        </div>
-        <span class="arrow">&#8250;</span>
-      </a>
+        <a class="calc-card" href="mortgage-reamortization-calculator.html">
+          <div class="calc-info">
+            <h3>Mortgage Reamortization Calculator</h3>
+            <p>See how a lump-sum payment reduces your balance and shortens your loan.</p>
+          </div>
+          <span class="arrow">&#8250;</span>
+        </a>
 
-      <a class="calc-card" href="mortgage-refinance-calculator.html">
-        <div class="calc-info">
-          <h3>Mortgage Refinance Calculator</h3>
-          <p>Compare your current loan to a refinance offer and find your break-even point.</p>
-        </div>
-        <span class="arrow">&#8250;</span>
-      </a>
+        <a class="calc-card" href="mortgage-refinance-calculator.html">
+          <div class="calc-info">
+            <h3>Mortgage Refinance Calculator</h3>
+            <p>Compare your current loan to a refinance offer and find your break-even point.</p>
+          </div>
+          <span class="arrow">&#8250;</span>
+        </a>
 
-      <a class="calc-card" href="compound-interest-calculator.html">
-        <div class="calc-info">
-          <h3>Compound Interest Calculator</h3>
-          <p>Watch your money grow over time with regular contributions and compounding.</p>
-        </div>
-        <span class="arrow">&#8250;</span>
-      </a>
+        <a class="calc-card" href="rent-vs-buy-calculator.html">
+          <div class="calc-info">
+            <h3>Rent vs. Buy Calculator</h3>
+            <p>Find the break-even point and see which option saves more money over time.</p>
+          </div>
+          <span class="arrow">&#8250;</span>
+        </a>
 
-      <a class="calc-card" href="auto-student-loan-calculator.html">
-        <div class="calc-info">
-          <h3>Auto &amp; Student Loan Calculator</h3>
-          <p>Calculate payments, total interest, and payoff schedules for any installment loan.</p>
-        </div>
-        <span class="arrow">&#8250;</span>
-      </a>
-
-      <a class="calc-card" href="rent-vs-buy-calculator.html">
-        <div class="calc-info">
-          <h3>Rent vs. Buy Calculator</h3>
-          <p>Find the break-even point and see which option saves more money over time.</p>
-        </div>
-        <span class="arrow">&#8250;</span>
-      </a>
-
-      <a class="calc-card" href="fire-number-calculator.html">
-        <div class="calc-info">
-          <h3>FIRE Number Calculator</h3>
-          <p>Find your financial independence target and how long it will take to get there.</p>
-        </div>
-        <span class="arrow">&#8250;</span>
-      </a>
-
-      <a class="calc-card" href="coastfi-calculator.html">
-        <div class="calc-info">
-          <h3>CoastFI Calculator</h3>
-          <p>Find the savings amount where you can stop contributing and let compounding carry you to retirement.</p>
-        </div>
-        <span class="arrow">&#8250;</span>
-      </a>
-
-      <a class="calc-card" href="budget-allocation-calculator.html">
-        <div class="calc-info">
-          <h3>Budget Allocation Calculator</h3>
-          <p>See where your money goes and how it stacks up against the 50/30/20 rule and other frameworks.</p>
-        </div>
-        <span class="arrow">&#8250;</span>
-      </a>
-
+      </div>
     </div>
+
+    <!-- INSTALLMENT LOANS -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Installment Loans</h2>
+      </div>
+      <div class="calculator-list">
+
+        <a class="calc-card" href="auto-student-loan-calculator.html">
+          <div class="calc-info">
+            <h3>Auto &amp; Student Loan Calculator</h3>
+            <p>Calculate payments, total interest, and payoff schedules for any installment loan.</p>
+          </div>
+          <span class="arrow">&#8250;</span>
+        </a>
+
+        <a class="calc-card" href="compound-interest-calculator.html">
+          <div class="calc-info">
+            <h3>Compound Interest Calculator</h3>
+            <p>Watch your money grow over time with regular contributions and compounding.</p>
+          </div>
+          <span class="arrow">&#8250;</span>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- RETIREMENT & SAVINGS -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Retirement &amp; Savings</h2>
+      </div>
+      <div class="calculator-list">
+
+        <a class="calc-card" href="fire-number-calculator.html">
+          <div class="calc-info">
+            <h3>FIRE Number Calculator</h3>
+            <p>Find your financial independence target and how long it will take to get there.</p>
+          </div>
+          <span class="arrow">&#8250;</span>
+        </a>
+
+        <a class="calc-card" href="coastfi-calculator.html">
+          <div class="calc-info">
+            <h3>CoastFI Calculator</h3>
+            <p>Find the savings amount where you can stop contributing and let compounding carry you to retirement.</p>
+          </div>
+          <span class="arrow">&#8250;</span>
+        </a>
+
+        <a class="calc-card" href="budget-allocation-calculator.html">
+          <div class="calc-info">
+            <h3>Budget Allocation Calculator</h3>
+            <p>See where your money goes and how it stacks up against the 50/30/20 rule and other frameworks.</p>
+          </div>
+          <span class="arrow">&#8250;</span>
+        </a>
+
+        <a class="calc-card" href="401k-rollover-calculator.html">
+          <div class="calc-info">
+            <h3>401k Rollover Comparison</h3>
+            <p>See exactly how much fees cost you over time — and what rolling over to an IRA could save.</p>
+          </div>
+          <span class="arrow">&#8250;</span>
+        </a>
+
+      </div>
+    </div>
+
   </main>
 
   <footer>
