@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auto &amp; Student Loan Calculator | Young Budgeteer</title>
+
+  <!--
+  =====================================================================
+  WORDPRESS EMBEDDING INSTRUCTIONS
+  =====================================================================
+  1. Open the page/post where you want this calculator
+  2. Add a new block → search for "Custom HTML"
+  3. Copy everything BETWEEN the <body> tags (from <div class="yb-calc-wrap">
+     down to and including the closing </script> tag)
+  4. Paste it into the Custom HTML block
+  5. The <style> and <script> tags paste fine in Gutenberg Custom HTML blocks
+
+  If your host strips <script> tags, install the "Code Snippets" plugin
+  and add the JS there, or use the "Elementor HTML" widget instead.
+  =====================================================================
+  -->
+
+  <style>
+    /* ── Design tokens ── */
+    :root {
+      --teal:        #0B7D67;
+      --teal-hover:  #0a6e5b;
+      --teal-pale:   #e8f5f2;
+      --teal-border: #b3d9d2;
+      --bg:          #efefef;
+      --surface:     #ffffff;
+      --border:      #dde0e3;
+      --text:        #1a1a1a;
+      --text-mid:    #555;
+      --text-muted:  #888;
+      --green:       #2e7d32;
+      --green-pale:  #e8f5e9;
+      --red:         #c62828;
+      --radius:      10px;
+      --shadow:      0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px 16px 48px;
+      line-height: 1.5;
+    }
+
+    .yb-calc-wrap { max-width: 920px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .calc-header { text-align: center; margin-bottom: 32px; }
+    .calc-header h1 {
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 700;
+      color: var(--teal);
+      margin-bottom: 10px;
+    }
+    .calc-header p { font-size: 1rem; color: var(--text-mid); max-width: 640px; margin: 0 auto; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      padding-bottom: 14px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--teal-pale);
+    }
+
+    /* ── Mode toggle tabs ── */
+    .mode-toggle {
+      display: flex;
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 4px;
+      width: fit-content;
+      margin-bottom: 26px;
+      gap: 2px;
+    }
+    .mode-btn {
+      padding: 9px 24px;
+      border: none;
+      background: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-mid);
+      transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+      white-space: nowrap;
+    }
+    .mode-btn.active {
+      background: var(--teal);
+      color: #fff;
+      box-shadow: 0 1px 5px rgba(11,125,103,0.3);
+    }
+    .mode-btn:not(.active):hover { background: #e4e4e4; }
+
+    /* ── Section labels ── */
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-mid);
+      margin-bottom: 16px;
+    }
+    .optional-tag {
+      font-size: 0.71rem;
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: 0;
+      color: var(--text-muted);
+      background: #f0f0f0;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 22px 0;
+    }
+
+    /* ── Input grid ── */
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 560px) { .input-grid { grid-template-columns: 1fr; } }
+
+    .input-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 640px) { .input-grid-3 { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 400px) { .input-grid-3 { grid-template-columns: 1fr; } }
+
+    .input-group { display: flex; flex-direction: column; gap: 5px; }
+    .input-group label { font-size: 0.875rem; font-weight: 600; color: var(--text); }
+    .input-group .hint { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
+
+    /* Input with prefix/suffix */
+    .field-wrap {
+      display: flex;
+      align-items: stretch;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: var(--surface);
+    }
+    .field-wrap:focus-within {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(11,125,103,0.12);
+    }
+    .field-affix {
+      display: flex;
+      align-items: center;
+      padding: 0 11px;
+      background: #f5f6f7;
+      color: var(--text-mid);
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-right: 1.5px solid var(--border);
+      user-select: none;
+      white-space: nowrap;
+    }
+    .field-affix.suffix { border-right: none; border-left: 1.5px solid var(--border); }
+    .field-wrap input, .field-wrap select {
+      flex: 1;
+      min-width: 0;
+      padding: 11px 12px;
+      border: none;
+      outline: none;
+      font-size: 1rem;
+      color: var(--text);
+      background: transparent;
+      -moz-appearance: textfield;
+    }
+    .field-wrap select { cursor: pointer; }
+    .field-wrap input::-webkit-outer-spin-button,
+    .field-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    /* Down payment row */
+    .dp-row { display: flex; gap: 10px; }
+    .dp-row .field-wrap { flex: 1; }
+    .dp-row .field-wrap.pct-field { max-width: 100px; }
+
+    /* Financed amount / loan amount pill */
+    .amount-pill {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      background: var(--teal-pale);
+      border: 1.5px solid var(--teal-border);
+      border-radius: 7px;
+      margin-top: 16px;
+    }
+    .ap-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--teal);
+    }
+    .ap-value {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--teal);
+    }
+
+    /* Optional extras toggle */
+    .extras-toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .extras-toggle-row input[type="checkbox"] {
+      width: 16px; height: 16px;
+      accent-color: var(--teal);
+      cursor: pointer;
+    }
+    .extras-toggle-row span { font-size: 0.9rem; font-weight: 600; color: var(--teal); }
+    .extras-fields {
+      display: none;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px dashed var(--teal-border);
+    }
+    .extras-fields.open { display: grid; }
+    @media (max-width: 620px) { .extras-fields { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 400px) { .extras-fields { grid-template-columns: 1fr; } }
+
+    /* Info box (for student loan notes) */
+    .info-box {
+      background: #f0f7ff;
+      border: 1.5px solid #b3d4f5;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.83rem;
+      color: #1a4a7a;
+      line-height: 1.55;
+      margin-top: 8px;
+    }
+    .info-box strong { color: #1a4a7a; }
+
+    /* Date row */
+    .date-row { display: flex; gap: 10px; }
+    .date-row .field-wrap { flex: 1; }
+    .date-row .field-wrap.year-field { max-width: 112px; }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      margin-top: 24px;
+      background: var(--teal);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-primary:hover { background: var(--teal-hover); }
+    .btn-primary:active { transform: scale(0.99); }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: 1.5px solid var(--teal);
+      color: var(--teal);
+      background: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-ghost:hover { background: var(--teal-pale); }
+
+    .btn-dl {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 14px;
+      border: 1.5px solid var(--border);
+      color: var(--text-mid);
+      background: var(--surface);
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-dl:hover { background: #f0f0f0; border-color: #bbb; }
+
+    .table-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Error ── */
+    .error-msg {
+      display: none;
+      color: var(--red);
+      font-size: 0.85rem;
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: #fff0f0;
+      border-radius: 5px;
+      border-left: 3px solid var(--red);
+    }
+
+    /* ── Results ── */
+    .results-wrap { display: none; }
+    .results-wrap.visible { display: block; animation: slideUp 0.35s ease; }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Capitalization notice banner */
+    .cap-banner {
+      display: none;
+      gap: 12px;
+      padding: 13px 16px;
+      margin-bottom: 20px;
+      background: #fff3e0;
+      border: 1.5px solid #ffcc80;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      color: #7a3f00;
+      line-height: 1.5;
+    }
+    .cap-banner.show { display: flex; }
+    .cap-banner .ban-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
+
+    /* Summary banner */
+    .summary-banner {
+      background: var(--teal-pale);
+      border: 1.5px solid var(--teal-border);
+      border-radius: var(--radius);
+      padding: 15px 20px;
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.7;
+    }
+    .summary-banner strong { color: var(--teal); }
+    .summary-banner .hl-green { color: var(--green); font-weight: 700; }
+
+    /* ── Metric cards ── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 680px) { .metrics-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 360px) { .metrics-grid { grid-template-columns: 1fr; } }
+
+    .metric-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px 16px;
+      text-align: center;
+    }
+    .metric-card.primary { background: var(--teal); color: #fff; }
+    .metric-card.savings { background: var(--green-pale); border: 1.5px solid #a5d6a7; }
+    .metric-lbl {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .metric-card.primary .metric-lbl { color: rgba(255,255,255,0.75); }
+    .metric-card.savings .metric-lbl { color: var(--green); }
+    .metric-val { font-size: 1.45rem; font-weight: 800; color: var(--text); line-height: 1.2; }
+    .metric-card.primary .metric-val { color: #fff; }
+    .metric-card.savings .metric-val { color: var(--green); }
+    .metric-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+    .metric-card.primary .metric-sub { color: rgba(255,255,255,0.65); }
+    .metric-card.savings .metric-sub { color: var(--green); opacity: 0.8; }
+
+    /* ── Chart ── */
+    .chart-wrap { position: relative; height: 220px; }
+    canvas { display: block; max-width: 100%; }
+    .chart-legend {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 12px;
+      font-size: 0.82rem;
+      color: var(--text-mid);
+      flex-wrap: wrap;
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 24px;
+      height: 3px;
+      border-radius: 2px;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    .legend-swatch {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border-radius: 3px;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+
+    /* ── Amortization table ── */
+    .amort-scroll {
+      display: none;
+      max-height: 460px;
+      overflow-y: auto;
+      overflow-x: auto;
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    .amort-scroll.open { display: block; }
+
+    .amort-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.81rem;
+      min-width: 460px;
+    }
+    .amort-table thead th {
+      padding: 9px 10px;
+      background: var(--teal);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.74rem;
+      text-align: right;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .amort-table thead th:first-child { text-align: left; }
+    .amort-table tbody td {
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: right;
+      white-space: nowrap;
+    }
+    .amort-table tbody td:first-child { text-align: left; font-weight: 600; color: var(--text-mid); }
+    .amort-table tbody tr:nth-child(even) { background: #f8f9fa; }
+    .amort-table .col-prin { color: var(--teal); font-weight: 700; }
+    .amort-table .col-int  { color: var(--text-mid); }
+    .amort-table tr.yr-row td {
+      background: var(--teal-pale);
+      color: var(--teal);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 5px 10px;
+    }
+
+    /* ── Disclaimer ── */
+    .disclaimer {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 4px;
+      padding: 0 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="yb-calc-wrap">
+
+  <!-- Header -->
+  <div class="calc-header">
+    <h1>Auto &amp; Student Loan Calculator</h1>
+    <p>Calculate your monthly payment and full amortization schedule for an auto loan or student loan — including the real cost of capitalized interest.</p>
+  </div>
+
+  <!-- ── Input card ── -->
+  <div class="card">
+    <div class="card-title">Loan Details</div>
+
+    <!-- Mode toggle -->
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="btn-auto" onclick="setMode('auto')">Auto Loan</button>
+      <button class="mode-btn" id="btn-student" onclick="setMode('student')">Student Loan</button>
+    </div>
+
+    <!-- ════════════════════════════════════
+         AUTO LOAN FIELDS
+         ════════════════════════════════════ -->
+    <div id="auto-fields">
+      <div class="section-label">Vehicle &amp; Purchase</div>
+      <div class="input-grid">
+        <div class="input-group">
+          <label for="a-price">Vehicle Price</label>
+          <div class="field-wrap">
+            <span class="field-affix">$</span>
+            <input type="number" id="a-price" placeholder="35,000" min="1" step="any" oninput="syncAutoDP('price')">
+          </div>
+          <span class="hint">Sticker price or agreed purchase price</span>
+        </div>
+        <div class="input-group">
+          <label>Down Payment</label>
+          <div class="dp-row">
+            <div class="field-wrap">
+              <span class="field-affix">$</span>
+              <input type="number" id="a-dp-dollar" placeholder="5,000" min="0" step="any" oninput="syncAutoDP('dollar')">
+            </div>
+            <div class="field-wrap pct-field">
+              <input type="number" id="a-dp-pct" placeholder="15" min="0" max="100" step="0.1" oninput="syncAutoDP('pct')">
+              <span class="field-affix suffix">%</span>
+            </div>
+          </div>
+          <span class="hint">Dollar amount and % stay in sync</span>
+        </div>
+      </div>
+
+      <!-- Financed amount display -->
+      <div class="amount-pill">
+        <span class="ap-label">Financed Amount</span>
+        <span class="ap-value" id="financed-display">$—</span>
+      </div>
+
+      <!-- Optional: trade-in, tax, fees -->
+      <div style="margin-top: 18px;">
+        <label class="extras-toggle-row">
+          <input type="checkbox" id="a-extras-toggle" onchange="toggleAutoExtras()">
+          <span>&#43; Add trade-in, sales tax &amp; fees (optional)</span>
+        </label>
+        <div class="extras-fields" id="auto-extras-fields">
+          <div class="input-group">
+            <label for="a-tradein">Trade-in Value</label>
+            <div class="field-wrap">
+              <span class="field-affix">$</span>
+              <input type="number" id="a-tradein" placeholder="8,000" min="0" step="any" oninput="refreshFinanced()">
+            </div>
+            <span class="hint">Reduces the amount you finance</span>
+          </div>
+          <div class="input-group">
+            <label for="a-tax">Sales Tax Rate</label>
+            <div class="field-wrap">
+              <input type="number" id="a-tax" placeholder="7" min="0" max="20" step="0.01" oninput="refreshFinanced()">
+              <span class="field-affix suffix">%</span>
+            </div>
+            <span class="hint">Applied to (price − trade-in) before down payment</span>
+          </div>
+          <div class="input-group">
+            <label for="a-fees">Title, Reg &amp; Doc Fees</label>
+            <div class="field-wrap">
+              <span class="field-affix">$</span>
+              <input type="number" id="a-fees" placeholder="500" min="0" step="any" oninput="refreshFinanced()">
+            </div>
+            <span class="hint">Dealer doc fee, title &amp; registration costs</span>
+          </div>
+        </div>
+      </div>
+    </div><!-- /auto-fields -->
+
+    <!-- ════════════════════════════════════
+         STUDENT LOAN FIELDS
+         ════════════════════════════════════ -->
+    <div id="student-fields" style="display:none;">
+      <div class="section-label">Loan Balance</div>
+      <div class="input-grid">
+        <div class="input-group">
+          <label for="s-balance">Current Loan Balance</label>
+          <div class="field-wrap">
+            <span class="field-affix">$</span>
+            <input type="number" id="s-balance" placeholder="35,000" min="1" step="any" oninput="refreshStudentAmount()">
+          </div>
+          <span class="hint">Your total principal at the start of repayment</span>
+        </div>
+        <div class="input-group">
+          <label for="s-cap-interest">
+            Capitalized Interest
+            <span class="optional-tag">optional</span>
+          </label>
+          <div class="field-wrap">
+            <span class="field-affix">$</span>
+            <input type="number" id="s-cap-interest" placeholder="0" min="0" step="any" oninput="refreshStudentAmount()">
+          </div>
+          <span class="hint">Unpaid interest added to principal at repayment start</span>
+        </div>
+      </div>
+
+      <!-- Loan amount pill -->
+      <div class="amount-pill">
+        <span class="ap-label">Total Balance at Repayment Start</span>
+        <span class="ap-value" id="student-amount-display">$—</span>
+      </div>
+
+      <div class="info-box" style="margin-top: 14px;">
+        <strong>What is capitalized interest?</strong> Federal unsubsidized loans accrue interest during school, grace periods,
+        and deferment. That unpaid interest is added to your principal when repayment begins — increasing both your balance
+        and total interest paid. Check your loan servicer's statement for your exact accrued interest amount.
+        Subsidized loans do <em>not</em> accrue interest during school.
+      </div>
+    </div><!-- /student-fields -->
+
+    <hr class="section-divider">
+
+    <!-- ════════════════════════════════════
+         SHARED FIELDS
+         ════════════════════════════════════ -->
+    <div class="section-label">Loan Terms</div>
+    <div class="input-grid">
+      <div class="input-group">
+        <label for="mc-rate">Annual Interest Rate (APR)</label>
+        <div class="field-wrap">
+          <input type="number" id="mc-rate" placeholder="6.5" min="0.01" max="50" step="0.01">
+          <span class="field-affix suffix">%</span>
+        </div>
+        <span class="hint" id="rate-hint">Lender's quoted rate — check your loan documents</span>
+      </div>
+      <div class="input-group">
+        <label for="mc-term">Loan Term</label>
+        <div class="field-wrap">
+          <select id="mc-term"></select>
+        </div>
+        <span class="hint" id="term-hint">Shorter term = higher payment but less interest</span>
+      </div>
+      <div class="input-group">
+        <label>First Payment Date</label>
+        <div class="date-row">
+          <div class="field-wrap">
+            <select id="mc-start-month"></select>
+          </div>
+          <div class="field-wrap year-field">
+            <select id="mc-start-year"></select>
+          </div>
+        </div>
+        <span class="hint">Labels your amortization schedule with real dates</span>
+      </div>
+      <div class="input-group">
+        <label for="mc-compounding">Interest Compounding</label>
+        <div class="field-wrap">
+          <select id="mc-compounding">
+            <option value="monthly">Monthly (standard auto &amp; private loans)</option>
+            <option value="daily">Daily Simple Interest (federal student loans)</option>
+          </select>
+        </div>
+        <span class="hint" id="compound-hint">Federal student loans use daily simple interest — difference in payment is typically under $1/month</span>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="calc-btn" onclick="runCalc()">Calculate My Payment</button>
+    <div class="error-msg" id="mc-error"></div>
+  </div><!-- /card -->
+
+
+  <!-- ── Results ── -->
+  <div class="results-wrap" id="results-wrap">
+
+    <!-- Capitalization notice (student loan only) -->
+    <div class="cap-banner" id="cap-banner">
+      <span class="ban-icon">&#9432;</span>
+      <span id="cap-banner-text"></span>
+    </div>
+
+    <!-- Summary banner -->
+    <div class="summary-banner" id="result-summary"></div>
+
+    <!-- Metric cards -->
+    <div class="metrics-grid">
+      <div class="metric-card primary">
+        <div class="metric-lbl">Monthly Payment</div>
+        <div class="metric-val" id="m-payment">—</div>
+        <div class="metric-sub">/month</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-lbl">Total Loan Cost</div>
+        <div class="metric-val" id="m-total-cost">—</div>
+        <div class="metric-sub">principal + interest</div>
+      </div>
+      <div class="metric-card savings">
+        <div class="metric-lbl">Total Interest Paid</div>
+        <div class="metric-val" id="m-total-interest">—</div>
+        <div class="metric-sub">over full loan term</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-lbl">Payoff Date</div>
+        <div class="metric-val" id="m-payoff">—</div>
+        <div class="metric-sub" id="m-payoff-sub"></div>
+      </div>
+    </div>
+
+    <!-- Balance + cumulative interest chart -->
+    <div class="card">
+      <div class="card-title">Balance &amp; Cumulative Interest Over Time</div>
+      <div class="chart-wrap">
+        <canvas id="loan-chart"></canvas>
+      </div>
+      <div class="chart-legend">
+        <span><span class="legend-dot" style="background:var(--teal);"></span>Remaining Balance</span>
+        <span><span class="legend-dot" style="background:#e57373;"></span>Cumulative Interest Paid</span>
+      </div>
+    </div>
+
+    <!-- Amortization schedule -->
+    <div class="card">
+      <div class="card-title">
+        Amortization Schedule
+        <span style="font-size:0.85rem; font-weight:400; color:var(--text-mid);" id="amort-sub"></span>
+      </div>
+      <div class="table-actions">
+        <button class="btn-ghost" id="amort-toggle-btn" onclick="toggleAmort()">&#9654; Show schedule</button>
+        <button class="btn-dl" onclick="downloadCSV()">&#8595; Download CSV</button>
+      </div>
+      <div class="amort-scroll" id="amort-scroll">
+        <table class="amort-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Payment</th>
+              <th>Principal</th>
+              <th>Interest</th>
+              <th>Balance</th>
+              <th>Cum. Interest</th>
+            </tr>
+          </thead>
+          <tbody id="amort-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="disclaimer" id="result-disclaimer"></p>
+
+  </div><!-- /results-wrap -->
+
+</div><!-- /yb-calc-wrap -->
+
+
+<script>
+  /* ── Helpers ── */
+  const $ = id => document.getElementById(id);
+  const fmtUSD = n => '$' + Math.abs(n).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  const fmtShort = n => {
+    if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'k';
+    return '$' + n.toFixed(0);
+  };
+
+  const MONTH_LONG  = ['January','February','March','April','May','June',
+                       'July','August','September','October','November','December'];
+  const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun',
+                       'Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  let currentMode = 'auto';
+  let _state      = null; /* shared state for CSV and resize */
+
+  /* ── Auto loan term options ── */
+  const AUTO_TERMS = [
+    { v: 24, label: '24 months (2 years)' },
+    { v: 36, label: '36 months (3 years)' },
+    { v: 48, label: '48 months (4 years)' },
+    { v: 60, label: '60 months (5 years)', selected: true },
+    { v: 72, label: '72 months (6 years)' },
+    { v: 84, label: '84 months (7 years)' },
+  ];
+
+  /* ── Student loan term options ── */
+  const STUDENT_TERMS = [
+    { v: 60,  label: '5 years (60 months)' },
+    { v: 120, label: '10 years (120 months)', selected: true },
+    { v: 180, label: '15 years (180 months)' },
+    { v: 240, label: '20 years (240 months)' },
+    { v: 300, label: '25 years (300 months)' },
+  ];
+
+  /* ── Initialize dropdowns ── */
+  function populateTerms(options) {
+    const sel = $('mc-term');
+    sel.innerHTML = options.map(o =>
+      `<option value="${o.v}"${o.selected ? ' selected' : ''}>${o.label}</option>`
+    ).join('');
+  }
+
+  (function init() {
+    /* Term */
+    populateTerms(AUTO_TERMS);
+
+    /* Start date */
+    const now   = new Date();
+    const curM  = now.getMonth();
+    const curY  = now.getFullYear();
+    const nextM = (curM + 1) % 12;
+    const nextY = curM === 11 ? curY + 1 : curY;
+
+    const mSel = $('mc-start-month');
+    MONTH_LONG.forEach((name, i) => {
+      const o = document.createElement('option');
+      o.value = i + 1; o.textContent = name;
+      if (i === nextM) o.selected = true;
+      mSel.appendChild(o);
+    });
+
+    const ySel = $('mc-start-year');
+    for (let y = curY - 2; y <= curY + 10; y++) {
+      const o = document.createElement('option');
+      o.value = y; o.textContent = y;
+      if (y === nextY) o.selected = true;
+      ySel.appendChild(o);
+    }
+  })();
+
+  /* ── Mode switching ── */
+  function setMode(mode) {
+    currentMode = mode;
+    $('btn-auto').classList.toggle('active',    mode === 'auto');
+    $('btn-student').classList.toggle('active', mode === 'student');
+    $('auto-fields').style.display    = mode === 'auto'    ? '' : 'none';
+    $('student-fields').style.display = mode === 'student' ? '' : 'none';
+
+    populateTerms(mode === 'auto' ? AUTO_TERMS : STUDENT_TERMS);
+
+    /* Default compounding per mode */
+    $('mc-compounding').value = mode === 'auto' ? 'monthly' : 'daily';
+
+    /* Update rate hint */
+    $('rate-hint').textContent = mode === 'auto'
+      ? 'Check your dealer\'s financing offer or pre-approval letter'
+      : 'Federal undergrad loans: 5.50% (2024–25). Check studentaid.gov for current rates.';
+
+    /* Clear results */
+    $('results-wrap').classList.remove('visible');
+    $('mc-error').style.display = 'none';
+  }
+
+  /* ── Auto loan down payment sync ── */
+  function syncAutoDP(changed) {
+    const price  = parseFloat($('a-price').value);
+    const dollar = parseFloat($('a-dp-dollar').value);
+    const pct    = parseFloat($('a-dp-pct').value);
+
+    if (changed === 'price' || changed === 'pct') {
+      if (!isNaN(price) && !isNaN(pct))
+        $('a-dp-dollar').value = +(price * pct / 100).toFixed(2) || '';
+    } else if (changed === 'dollar') {
+      if (!isNaN(dollar) && !isNaN(price) && price > 0)
+        $('a-dp-pct').value = (dollar / price * 100).toFixed(1);
+    }
+    refreshFinanced();
+  }
+
+  /* ── Toggle auto loan extras ── */
+  function toggleAutoExtras() {
+    $('auto-extras-fields').classList.toggle('open', $('a-extras-toggle').checked);
+    refreshFinanced();
+  }
+
+  /* ── Refresh financed amount display ── */
+  function refreshFinanced() {
+    const price   = parseFloat($('a-price').value)      || 0;
+    const dp      = parseFloat($('a-dp-dollar').value)   || 0;
+    const tradein = parseFloat($('a-tradein').value)     || 0;
+    const taxRate = parseFloat($('a-tax').value)         || 0;
+    const fees    = parseFloat($('a-fees').value)        || 0;
+
+    /* Tax typically applies to (price − trade-in) */
+    const taxable  = Math.max(price - tradein, 0);
+    const tax      = taxable * taxRate / 100;
+    const financed = Math.max(price - dp - tradein + tax + fees, 0);
+
+    $('financed-display').textContent = financed > 0 ? fmtUSD(financed) : '$—';
+  }
+
+  /* ── Student loan amount display ── */
+  function refreshStudentAmount() {
+    const balance = parseFloat($('s-balance').value)      || 0;
+    const capInt  = parseFloat($('s-cap-interest').value) || 0;
+    const total   = balance + capInt;
+    $('student-amount-display').textContent = total > 0 ? fmtUSD(total) : '$—';
+  }
+
+  /* ── Toggle amortization table ── */
+  function toggleAmort() {
+    const wrap = $('amort-scroll'), btn = $('amort-toggle-btn');
+    const open = wrap.classList.toggle('open');
+    btn.textContent = open ? '▼ Hide schedule' : '▶ Show schedule';
+  }
+
+  /* ── Date helpers ── */
+  function addMonths(startMonth, startYear, n) {
+    const d = new Date(startYear, startMonth - 1 + n, 1);
+    return { month: d.getMonth() + 1, year: d.getFullYear() };
+  }
+  function fmtDate(month, year) {
+    return MONTH_SHORT[month - 1] + ' ' + year;
+  }
+
+  /* ── CSV download ── */
+  function downloadCSV() {
+    if (!_state) return;
+    const { rows } = _state;
+    const BOM  = '\uFEFF';
+    const hdrs = ['Date', 'Payment', 'Principal', 'Interest', 'Balance', 'Cumulative Interest'];
+    const data = rows.map(r => [
+      r.date,
+      r.payment.toFixed(2),
+      r.principal.toFixed(2),
+      r.interest.toFixed(2),
+      r.balance.toFixed(2),
+      r.cumInt.toFixed(2),
+    ]);
+    const csv = [hdrs, ...data]
+      .map(r => r.map(c => '"' + String(c ?? '').replace(/"/g, '""') + '"').join(','))
+      .join('\r\n');
+    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const name = currentMode === 'auto' ? 'auto-loan-amortization.csv' : 'student-loan-amortization.csv';
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 100);
+  }
+
+  /* ── Core finance math ── */
+  function calcPayment(principal, monthlyRate, months) {
+    if (monthlyRate === 0) return principal / months;
+    return principal * monthlyRate * Math.pow(1 + monthlyRate, months)
+           / (Math.pow(1 + monthlyRate, months) - 1);
+  }
+
+  /*
+   * Effective monthly rate based on compounding choice.
+   *
+   *  Monthly (standard):
+   *    r = APR / 12
+   *
+   *  Daily simple interest (federal student loans):
+   *    Interest accrues daily at APR/365.25.
+   *    For payment calculation we convert to an effective monthly rate:
+   *    r = (1 + APR/365.25)^(365.25/12) − 1
+   *
+   *  In practice the difference is under $1/month on most loan amounts —
+   *  but implementing it correctly matters for accuracy.
+   */
+  function effectiveMonthlyRate(annualRatePct, compounding) {
+    const r = annualRatePct / 100;
+    if (compounding === 'daily') {
+      return Math.pow(1 + r / 365.25, 365.25 / 12) - 1;
+    }
+    return r / 12;
+  }
+
+  /* ── Main calculation ── */
+  function runCalc() {
+    const errEl = $('mc-error');
+    errEl.style.display = 'none';
+    const fail = msg => { errEl.textContent = msg; errEl.style.display = 'block'; };
+
+    /* ── Determine loan amount by mode ── */
+    let loanAmount, capIntAmount = 0;
+    if (currentMode === 'auto') {
+      const price   = parseFloat($('a-price').value)    || 0;
+      const dp      = parseFloat($('a-dp-dollar').value) || 0;
+      const tradein = parseFloat($('a-tradein').value)   || 0;
+      const taxRate = parseFloat($('a-tax').value)       || 0;
+      const fees    = parseFloat($('a-fees').value)      || 0;
+
+      if (!price || price <= 0) return fail('Please enter the vehicle price.');
+      if (dp < 0)               return fail('Down payment cannot be negative.');
+      if (dp >= price)          return fail('Down payment must be less than the vehicle price.');
+
+      const taxable  = Math.max(price - tradein, 0);
+      const tax      = taxable * taxRate / 100;
+      loanAmount     = Math.max(price - dp - tradein + tax + fees, 0);
+
+      if (loanAmount <= 0) return fail('Financed amount must be greater than $0.');
+    } else {
+      const balance = parseFloat($('s-balance').value) || 0;
+      capIntAmount  = parseFloat($('s-cap-interest').value) || 0;
+
+      if (!balance || balance <= 0) return fail('Please enter your loan balance.');
+      if (capIntAmount < 0)          return fail('Capitalized interest cannot be negative.');
+
+      loanAmount = balance + capIntAmount;
+    }
+
+    const annualRate  = parseFloat($('mc-rate').value);
+    const months      = parseInt($('mc-term').value);
+    const compounding = $('mc-compounding').value;
+    const startMonth  = parseInt($('mc-start-month').value);
+    const startYear   = parseInt($('mc-start-year').value);
+
+    if (!annualRate || annualRate <= 0) return fail('Please enter an annual interest rate.');
+    if (!months || months < 1)          return fail('Please select a loan term.');
+
+    const r       = effectiveMonthlyRate(annualRate, compounding);
+    const payment = calcPayment(loanAmount, r, months);
+
+    /* ── Build amortization ── */
+    let balance  = loanAmount;
+    let cumInt   = 0;
+
+    const rows    = [];
+    const chartPts = [{ n: 0, balance: loanAmount, cumInt: 0 }];
+
+    for (let m = 1; m <= months; m++) {
+      const interest  = balance * r;
+      const principal = payment - interest;
+      balance         = Math.max(balance - principal, 0);
+      cumInt         += interest;
+
+      const { month: rowM, year: rowY } = addMonths(startMonth, startYear, m - 1);
+      rows.push({ date: fmtDate(rowM, rowY), payment, principal, interest, balance, cumInt, month: m });
+
+      /* Chart: year-end snapshots */
+      if (m % 12 === 0 || m === months) {
+        chartPts.push({ n: Math.ceil(m / 12), balance, cumInt });
+      }
+    }
+
+    const totalInterest = payment * months - loanAmount;
+    const totalCost     = payment * months;
+    const payoffDate    = addMonths(startMonth, startYear, months - 1);
+
+    /* Save state */
+    _state = { rows, chartPts, loanAmount, annualRate, months, compounding, currentMode };
+
+    /* ── Capitalized interest banner (student loan only) ── */
+    if (currentMode === 'student' && capIntAmount > 0) {
+      const extraInterest = (calcPayment(capIntAmount, r, months) * months) - capIntAmount;
+      $('cap-banner-text').innerHTML =
+        `<strong>Capitalized interest impact:</strong> The <strong>${fmtUSD(capIntAmount)}</strong> added to your principal
+         will cost you an additional <strong>~${fmtUSD(extraInterest)}</strong> in interest over the life of the loan —
+         on top of the interest on your original balance.`;
+      $('cap-banner').classList.add('show');
+    } else {
+      $('cap-banner').classList.remove('show');
+    }
+
+    /* ── Summary banner ── */
+    const termYrs  = months / 12;
+    const termStr  = Number.isInteger(termYrs) ? termYrs + '-year' : months + '-month';
+    const compStr  = compounding === 'daily' ? 'daily simple interest' : 'monthly compounding';
+    const modeStr  = currentMode === 'auto' ? 'auto loan' : 'student loan';
+
+    $('result-summary').innerHTML =
+      `A <strong>${fmtUSD(loanAmount)}</strong> ${modeStr} at <strong>${annualRate}%</strong> (${compStr})
+       over <strong>${termStr}</strong> costs <strong>${fmtUSD(payment)}/month</strong>.
+       By payoff you'll have paid <strong>${fmtUSD(totalCost)}</strong> total —
+       <span class="hl-green">${fmtUSD(totalInterest)} of that is interest (${Math.round(totalInterest / loanAmount * 100)}% of the original loan).</span>`;
+
+    /* ── Metric cards ── */
+    $('m-payment').textContent      = fmtUSD(payment);
+    $('m-total-cost').textContent   = fmtUSD(totalCost);
+    $('m-total-interest').textContent = fmtUSD(totalInterest);
+    $('m-payoff').textContent       = fmtDate(payoffDate.month, payoffDate.year);
+    $('m-payoff-sub').textContent   = termStr + ' term';
+
+    /* ── Amortization table ── */
+    $('amort-sub').textContent = ` — ${months} monthly payments`;
+
+    let prevYr = null;
+    $('amort-body').innerHTML = rows.map(r => {
+      const yr  = Math.ceil(r.month / 12);
+      let hdr   = '';
+      if (yr !== prevYr) { prevYr = yr; hdr = `<tr class="yr-row"><td colspan="6">Year ${yr}</td></tr>`; }
+      return hdr + `<tr>
+        <td>${r.date}</td>
+        <td>${fmtUSD(r.payment)}</td>
+        <td class="col-prin">${fmtUSD(r.principal)}</td>
+        <td class="col-int">${fmtUSD(r.interest)}</td>
+        <td>${fmtUSD(r.balance)}</td>
+        <td>${fmtUSD(r.cumInt)}</td>
+      </tr>`;
+    }).join('');
+
+    /* ── Disclaimer ── */
+    $('result-disclaimer').textContent = currentMode === 'auto'
+      ? '* Results are estimates. Actual payments may vary based on lender rounding and loan terms. Sales tax calculations vary by state. Consult your lender before signing.'
+      : '* Results are estimates. Federal student loan payments may differ based on repayment plan (Standard, Graduated, IDR, etc.). Interest capitalization events vary by loan type and servicer. Visit studentaid.gov for official repayment information.';
+
+    /* ── Show results ── */
+    $('results-wrap').classList.add('visible');
+    $('results-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    setTimeout(() => drawChart(chartPts, loanAmount, months / 12, totalInterest), 60);
+  }
+
+  /* ── Balance + cumulative interest chart ── */
+  /*
+   * Two-line chart showing:
+   *   - Teal line (declining): remaining balance
+   *   - Salmon/red line (rising): cumulative interest paid to date
+   *
+   * The "crossover point" where cumulative interest paid exceeds the remaining
+   * balance is a powerful visualization — especially for long student loans.
+   */
+  function drawChart(pts, loanAmount, termYears, totalInterest) {
+    const canvas = $('loan-chart');
+    const ctx    = canvas.getContext('2d');
+    const dpr    = window.devicePixelRatio || 1;
+    const cW     = canvas.parentElement.clientWidth;
+    const cH     = 220;
+
+    canvas.width  = cW * dpr; canvas.height = cH * dpr;
+    canvas.style.width  = cW + 'px';
+    canvas.style.height = cH + 'px';
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, cW, cH);
+
+    const pad  = { top: 16, right: 16, bottom: 36, left: 76 };
+    const w    = cW - pad.left - pad.right;
+    const h    = cH - pad.top  - pad.bottom;
+    const n    = pts.length;
+
+    /* Y-axis max: whichever is larger — starting balance or total interest */
+    const maxY = Math.max(loanAmount, totalInterest) * 1.05;
+
+    const xAt = i   => pad.left + (i / (n - 1)) * w;
+    const yAt = val => pad.top  + (1 - Math.min(val, maxY) / maxY) * h;
+
+    /* Grid lines + Y labels */
+    ctx.strokeStyle = '#e8eaed'; ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const val = maxY * i / 4;
+      const y   = yAt(val);
+      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + w, y); ctx.stroke();
+      ctx.fillStyle = '#999'; ctx.font = '11px -apple-system, sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText(fmtShort(val), pad.left - 6, y + 4);
+    }
+
+    /* X labels */
+    const xStep = termYears <= 7 ? 1 : termYears <= 15 ? 5 : 5;
+    ctx.fillStyle = '#999'; ctx.font = '11px -apple-system, sans-serif'; ctx.textAlign = 'center';
+    for (let i = 0; i < n; i++) {
+      const yr = pts[i].n;
+      if (yr % xStep === 0 || yr === Math.round(termYears)) {
+        ctx.fillText('Yr ' + yr, xAt(i), cH - pad.bottom + 16);
+      }
+    }
+
+    /* ── Draw balance area fill (teal, very light) ── */
+    ctx.beginPath();
+    ctx.moveTo(xAt(0), yAt(pts[0].balance));
+    for (let i = 1; i < n; i++) ctx.lineTo(xAt(i), yAt(pts[i].balance));
+    ctx.lineTo(xAt(n - 1), yAt(0));
+    ctx.lineTo(xAt(0),     yAt(0));
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(11,125,103,0.08)';
+    ctx.fill();
+
+    /* ── Draw cumulative interest fill (salmon, very light) ── */
+    ctx.beginPath();
+    ctx.moveTo(xAt(0), yAt(pts[0].cumInt));
+    for (let i = 1; i < n; i++) ctx.lineTo(xAt(i), yAt(pts[i].cumInt));
+    ctx.lineTo(xAt(n - 1), yAt(0));
+    ctx.lineTo(xAt(0),     yAt(0));
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(229,115,115,0.10)';
+    ctx.fill();
+
+    function drawLine(getter, color, dashed) {
+      ctx.beginPath();
+      ctx.moveTo(xAt(0), yAt(getter(pts[0])));
+      for (let i = 1; i < n; i++) ctx.lineTo(xAt(i), yAt(getter(pts[i])));
+      ctx.strokeStyle = color;
+      ctx.lineWidth   = 2.5;
+      ctx.setLineDash(dashed ? [7, 4] : []);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    drawLine(p => p.cumInt,  '#e57373', false); /* cumulative interest — salmon */
+    drawLine(p => p.balance, '#0B7D67', false); /* balance — teal */
+
+    /* Crossover annotation: find where cumInt first exceeds balance */
+    let crossoverIdx = -1;
+    for (let i = 1; i < n; i++) {
+      if (pts[i].cumInt >= pts[i].balance) { crossoverIdx = i; break; }
+    }
+    if (crossoverIdx > 0 && crossoverIdx < n - 1) {
+      const cx = xAt(crossoverIdx);
+      const cy = yAt(pts[crossoverIdx].balance);
+      ctx.beginPath();
+      ctx.arc(cx, cy, 4, 0, 2 * Math.PI);
+      ctx.fillStyle = '#888';
+      ctx.fill();
+      ctx.fillStyle = '#777';
+      ctx.font = '10px -apple-system, sans-serif';
+      ctx.textAlign = cx > cW / 2 ? 'right' : 'left';
+      const labelX = cx > cW / 2 ? cx - 8 : cx + 8;
+      ctx.fillText('Interest > Balance', labelX, cy - 7);
+    }
+  }
+
+  /* ── Redraw on resize ── */
+  let _rt;
+  window.addEventListener('resize', () => {
+    clearTimeout(_rt);
+    _rt = setTimeout(() => {
+      if (!_state || !$('results-wrap').classList.contains('visible')) return;
+      const { chartPts, loanAmount, months } = _state;
+      const totalInterest = _state.rows[_state.rows.length - 1].cumInt;
+      drawChart(chartPts, loanAmount, months / 12, totalInterest);
+    }, 200);
+  });
+
+  /* ── Enter key triggers calculation ── */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.closest('.yb-calc-wrap')) runCalc();
+  });
+</script>
+
+</body>
+</html>

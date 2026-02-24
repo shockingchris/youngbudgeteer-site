@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mortgage Calculator | Young Budgeteer</title>
+
+  <!--
+  =====================================================================
+  WORDPRESS EMBEDDING INSTRUCTIONS
+  =====================================================================
+  1. Open the page/post where you want this calculator
+  2. Add a new block → search for "Custom HTML"
+  3. Copy everything BETWEEN the <body> tags (from <div class="yb-calc-wrap">
+     down to and including the closing </script> tag)
+  4. Paste it into the Custom HTML block
+  5. The <style> and <script> tags paste fine in Gutenberg Custom HTML blocks
+
+  If your host strips <script> tags, install the "Code Snippets" plugin
+  and add the JS there, or use the "Elementor HTML" widget instead.
+  =====================================================================
+  -->
+
+  <style>
+    /* ── Design tokens ── */
+    :root {
+      --teal:        #0B7D67;
+      --teal-hover:  #0a6e5b;
+      --teal-pale:   #e8f5f2;
+      --teal-border: #b3d9d2;
+      --bg:          #efefef;
+      --surface:     #ffffff;
+      --border:      #dde0e3;
+      --text:        #1a1a1a;
+      --text-mid:    #555;
+      --text-muted:  #888;
+      --green:       #2e7d32;
+      --green-pale:  #e8f5e9;
+      --red:         #c62828;
+      --radius:      10px;
+      --shadow:      0 2px 10px rgba(0,0,0,0.08);
+      /* Breakdown slice colors */
+      --c-pi:   #0B7D67;
+      --c-tax:  #4a6fa5;
+      --c-ins:  #e07b39;
+      --c-pmi:  #c0392b;
+      --c-hoa:  #7e57c2;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px 16px 48px;
+      line-height: 1.5;
+    }
+
+    .yb-calc-wrap { max-width: 920px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .calc-header { text-align: center; margin-bottom: 32px; }
+    .calc-header h1 {
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 700;
+      color: var(--teal);
+      margin-bottom: 10px;
+    }
+    .calc-header p { font-size: 1rem; color: var(--text-mid); max-width: 600px; margin: 0 auto; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      padding-bottom: 14px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--teal-pale);
+    }
+
+    /* ── Section labels ── */
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-mid);
+      margin-bottom: 16px;
+    }
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 22px 0;
+    }
+
+    /* ── Input grid ── */
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 560px) { .input-grid { grid-template-columns: 1fr; } }
+
+    .input-group { display: flex; flex-direction: column; gap: 5px; }
+    .input-group label { font-size: 0.875rem; font-weight: 600; color: var(--text); }
+    .input-group .hint { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
+
+    /* Input with prefix/suffix */
+    .field-wrap {
+      display: flex;
+      align-items: stretch;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: var(--surface);
+    }
+    .field-wrap:focus-within {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(11,125,103,0.12);
+    }
+    .field-affix {
+      display: flex;
+      align-items: center;
+      padding: 0 11px;
+      background: #f5f6f7;
+      color: var(--text-mid);
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-right: 1.5px solid var(--border);
+      user-select: none;
+      white-space: nowrap;
+    }
+    .field-affix.suffix { border-right: none; border-left: 1.5px solid var(--border); }
+    .field-wrap input, .field-wrap select {
+      flex: 1;
+      min-width: 0;
+      padding: 11px 12px;
+      border: none;
+      outline: none;
+      font-size: 1rem;
+      color: var(--text);
+      background: transparent;
+      -moz-appearance: textfield;
+    }
+    .field-wrap select { cursor: pointer; }
+    .field-wrap input::-webkit-outer-spin-button,
+    .field-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    /* Down payment: dollar + % side by side */
+    .dp-row { display: flex; gap: 10px; }
+    .dp-row .field-wrap { flex: 1; }
+    .dp-row .field-wrap.pct-field { max-width: 105px; }
+
+    /* Loan amount pill (read-only display) */
+    .loan-amount-pill {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      background: var(--teal-pale);
+      border: 1.5px solid var(--teal-border);
+      border-radius: 7px;
+      margin-top: 16px;
+    }
+    .lap-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--teal);
+    }
+    .lap-value {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--teal);
+    }
+
+    /* Start date row */
+    .date-row { display: flex; gap: 10px; }
+    .date-row .field-wrap { flex: 1; }
+    .date-row .field-wrap.year-field { max-width: 110px; }
+
+    /* ── Expenses toggle ── */
+    .expenses-toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .expenses-toggle-row input[type="checkbox"] {
+      width: 16px; height: 16px;
+      accent-color: var(--teal);
+      cursor: pointer;
+    }
+    .expenses-toggle-row span { font-size: 0.9rem; font-weight: 600; color: var(--teal); }
+    .expenses-fields {
+      display: none;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px dashed var(--teal-border);
+    }
+    .expenses-fields.open { display: grid; }
+    @media (max-width: 620px) { .expenses-fields { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 400px) { .expenses-fields { grid-template-columns: 1fr; } }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      margin-top: 24px;
+      background: var(--teal);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-primary:hover { background: var(--teal-hover); }
+    .btn-primary:active { transform: scale(0.99); }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: 1.5px solid var(--teal);
+      color: var(--teal);
+      background: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-ghost:hover { background: var(--teal-pale); }
+
+    .btn-dl {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 14px;
+      border: 1.5px solid var(--border);
+      color: var(--text-mid);
+      background: var(--surface);
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-dl:hover { background: #f0f0f0; border-color: #bbb; }
+
+    .table-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Error ── */
+    .error-msg {
+      display: none;
+      color: var(--red);
+      font-size: 0.85rem;
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: #fff0f0;
+      border-radius: 5px;
+      border-left: 3px solid var(--red);
+    }
+
+    /* ── Results ── */
+    .results-wrap { display: none; }
+    .results-wrap.visible { display: block; animation: slideUp 0.35s ease; }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── PMI notice banner ── */
+    .pmi-banner {
+      display: none;
+      gap: 12px;
+      padding: 13px 16px;
+      margin-bottom: 20px;
+      background: #fff3e0;
+      border: 1.5px solid #ffcc80;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      color: #7a3f00;
+      line-height: 1.5;
+    }
+    .pmi-banner.show { display: flex; }
+    .pmi-banner .banner-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Payment summary card ── */
+    .payment-grid {
+      display: grid;
+      grid-template-columns: 1fr 168px;
+      gap: 32px;
+      align-items: center;
+    }
+    @media (max-width: 600px) {
+      .payment-grid { grid-template-columns: 1fr; }
+      .donut-wrap { margin: 8px auto 0; }
+    }
+
+    .total-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+    .total-amount {
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: var(--teal);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .total-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 22px;
+    }
+
+    /* Breakdown rows */
+    .breakdown-list { display: flex; flex-direction: column; gap: 9px; }
+    .breakdown-item {
+      display: grid;
+      grid-template-columns: 10px 1fr auto 110px;
+      align-items: center;
+      gap: 10px;
+    }
+    @media (max-width: 420px) {
+      .breakdown-item { grid-template-columns: 10px 1fr auto; }
+      .bd-bar { display: none; }
+    }
+    .bd-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .bd-label { font-size: 0.875rem; color: var(--text-mid); }
+    .bd-amount { font-size: 0.875rem; font-weight: 700; color: var(--text); text-align: right; white-space: nowrap; }
+    .bd-bar { height: 6px; background: #efefef; border-radius: 3px; overflow: hidden; }
+    .bd-fill { height: 100%; border-radius: 3px; }
+
+    .breakdown-total { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+    .breakdown-total .bd-label { font-weight: 700; color: var(--text); }
+    .breakdown-total .bd-amount { font-size: 1rem; color: var(--teal); font-weight: 800; }
+
+    /* Donut chart */
+    .donut-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    canvas { display: block; }
+
+    /* ── Metric cards ── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 680px) { .metrics-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 360px) { .metrics-grid { grid-template-columns: 1fr; } }
+
+    .metric-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px 16px;
+      text-align: center;
+    }
+    .metric-card.primary { background: var(--teal); color: #fff; }
+    .metric-card.savings { background: var(--green-pale); border: 1.5px solid #a5d6a7; }
+    .metric-lbl {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .metric-card.primary .metric-lbl { color: rgba(255,255,255,0.75); }
+    .metric-card.savings .metric-lbl { color: var(--green); }
+    .metric-val { font-size: 1.45rem; font-weight: 800; color: var(--text); line-height: 1.2; }
+    .metric-card.primary .metric-val { color: #fff; }
+    .metric-card.savings .metric-val { color: var(--green); }
+    .metric-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+    .metric-card.primary .metric-sub { color: rgba(255,255,255,0.65); }
+    .metric-card.savings .metric-sub { color: var(--green); opacity: 0.8; }
+
+    /* ── Balance chart ── */
+    .chart-wrap { position: relative; height: 220px; }
+    .chart-legend {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 12px;
+      font-size: 0.82rem;
+      color: var(--text-mid);
+      flex-wrap: wrap;
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 24px;
+      height: 3px;
+      border-radius: 2px;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    .legend-swatch {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border-radius: 3px;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+
+    /* ── Amortization table ── */
+    .amort-scroll {
+      display: none;
+      max-height: 460px;
+      overflow-y: auto;
+      overflow-x: auto;
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    .amort-scroll.open { display: block; }
+
+    .amort-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.81rem;
+      min-width: 500px;
+    }
+    .amort-table thead th {
+      padding: 9px 10px;
+      background: var(--teal);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.74rem;
+      text-align: right;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .amort-table thead th:first-child { text-align: left; }
+    .amort-table tbody td {
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: right;
+      white-space: nowrap;
+    }
+    .amort-table tbody td:first-child { text-align: left; font-weight: 600; color: var(--text-mid); }
+    .amort-table tbody tr:nth-child(even) { background: #f8f9fa; }
+    .amort-table .col-prin { color: var(--teal); font-weight: 700; }
+    .amort-table .col-int  { color: var(--text-mid); }
+    .amort-table .col-bal  { font-weight: 600; }
+    .amort-table tr.yr-row td {
+      background: var(--teal-pale);
+      color: var(--teal);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 5px 10px;
+    }
+
+    /* ── Disclaimer ── */
+    .disclaimer {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 4px;
+      padding: 0 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="yb-calc-wrap">
+
+  <!-- Header -->
+  <div class="calc-header">
+    <h1>Mortgage Calculator</h1>
+    <p>Calculate your monthly payment, see exactly how it breaks down, and explore the full amortization schedule — before you sign anything.</p>
+  </div>
+
+  <!-- ── Input card ── -->
+  <div class="card">
+    <div class="card-title">Loan Details</div>
+
+    <!-- Purchase & Down Payment -->
+    <div class="section-label">Purchase &amp; Down Payment</div>
+    <div class="input-grid">
+      <div class="input-group">
+        <label for="mc-price">Home Price</label>
+        <div class="field-wrap">
+          <span class="field-affix">$</span>
+          <input type="number" id="mc-price" placeholder="400,000" min="1" step="any" oninput="syncDP('price')">
+        </div>
+        <span class="hint">The purchase price of the home</span>
+      </div>
+      <div class="input-group">
+        <label>Down Payment</label>
+        <div class="dp-row">
+          <div class="field-wrap">
+            <span class="field-affix">$</span>
+            <input type="number" id="mc-dp-dollar" placeholder="80,000" min="0" step="any" oninput="syncDP('dollar')">
+          </div>
+          <div class="field-wrap pct-field">
+            <input type="number" id="mc-dp-pct" placeholder="20" min="0" max="100" step="0.1" oninput="syncDP('pct')">
+            <span class="field-affix suffix">%</span>
+          </div>
+        </div>
+        <span class="hint">Dollar amount and percentage stay in sync</span>
+      </div>
+    </div>
+
+    <!-- Loan amount display -->
+    <div class="loan-amount-pill">
+      <span class="lap-label">Loan Amount</span>
+      <span class="lap-value" id="loan-amount-display">$—</span>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- Term, Rate, Start Date -->
+    <div class="section-label">Loan Terms</div>
+    <div class="input-grid">
+      <div class="input-group">
+        <label for="mc-term">Loan Term</label>
+        <div class="field-wrap">
+          <select id="mc-term">
+            <option value="30">30 Years</option>
+            <option value="20">20 Years</option>
+            <option value="15">15 Years</option>
+            <option value="10">10 Years</option>
+          </select>
+        </div>
+        <span class="hint">30 yr = lower payment · 15 yr = less interest</span>
+      </div>
+      <div class="input-group">
+        <label for="mc-rate">Annual Interest Rate</label>
+        <div class="field-wrap">
+          <input type="number" id="mc-rate" placeholder="6.75" min="0.01" max="30" step="0.01">
+          <span class="field-affix suffix">%</span>
+        </div>
+        <span class="hint">Your loan rate from your lender quote (not APR)</span>
+      </div>
+      <div class="input-group">
+        <label>Loan Start Date</label>
+        <div class="date-row">
+          <div class="field-wrap">
+            <select id="mc-start-month"></select>
+          </div>
+          <div class="field-wrap year-field">
+            <select id="mc-start-year"></select>
+          </div>
+        </div>
+        <span class="hint">First payment month — labels your amortization dates</span>
+      </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- Optional: Taxes, Insurance, HOA -->
+    <label class="expenses-toggle-row">
+      <input type="checkbox" id="mc-expenses-toggle" onchange="toggleExpenses()">
+      <span>&#43; Include taxes, insurance &amp; HOA (optional)</span>
+    </label>
+    <div class="expenses-fields" id="mc-expenses-fields">
+      <div class="input-group">
+        <label for="mc-tax">Annual Property Tax</label>
+        <div class="field-wrap">
+          <span class="field-affix">$</span>
+          <input type="number" id="mc-tax" placeholder="4,800" min="0" step="any">
+        </div>
+        <span class="hint">Avg ≈ 1–2% of home value/year (check your county)</span>
+      </div>
+      <div class="input-group">
+        <label for="mc-insurance">Annual Home Insurance</label>
+        <div class="field-wrap">
+          <span class="field-affix">$</span>
+          <input type="number" id="mc-insurance" placeholder="1,200" min="0" step="any">
+        </div>
+        <span class="hint">Homeowner's / hazard insurance</span>
+      </div>
+      <div class="input-group">
+        <label for="mc-hoa">Monthly HOA Fees</label>
+        <div class="field-wrap">
+          <span class="field-affix">$</span>
+          <input type="number" id="mc-hoa" placeholder="0" min="0" step="any">
+        </div>
+        <span class="hint">Leave $0 if no HOA applies</span>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="runCalc()">Calculate My Payment</button>
+    <div class="error-msg" id="mc-error"></div>
+  </div><!-- /card -->
+
+
+  <!-- ── Results ── -->
+  <div class="results-wrap" id="results-wrap">
+
+    <!-- PMI notice -->
+    <div class="pmi-banner" id="pmi-banner">
+      <span class="banner-icon">&#9432;</span>
+      <span id="pmi-banner-text"></span>
+    </div>
+
+    <!-- Payment breakdown summary -->
+    <div class="card">
+      <div class="card-title">Monthly Payment Breakdown</div>
+      <div class="payment-grid">
+        <div>
+          <div class="total-label">Total Monthly Payment</div>
+          <div class="total-amount" id="total-payment-big">—</div>
+          <div class="total-sub" id="total-payment-sub">per month</div>
+          <div class="breakdown-list" id="breakdown-list"></div>
+        </div>
+        <div class="donut-wrap">
+          <canvas id="donut-chart" width="160" height="160"
+                  style="width:160px; height:160px;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Metric cards -->
+    <div class="metrics-grid">
+      <div class="metric-card primary">
+        <div class="metric-lbl">Principal &amp; Interest</div>
+        <div class="metric-val" id="m-pi">—</div>
+        <div class="metric-sub">/month · loan only</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-lbl">Total Loan Cost</div>
+        <div class="metric-val" id="m-total-cost">—</div>
+        <div class="metric-sub">principal + interest</div>
+      </div>
+      <div class="metric-card savings">
+        <div class="metric-lbl">Total Interest Paid</div>
+        <div class="metric-val" id="m-total-interest">—</div>
+        <div class="metric-sub">over full loan term</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-lbl">Payoff Date</div>
+        <div class="metric-val" id="m-payoff">—</div>
+        <div class="metric-sub" id="m-payoff-sub"></div>
+      </div>
+    </div>
+
+    <!-- Balance over time chart -->
+    <div class="card">
+      <div class="card-title">Balance &amp; Equity Over Time</div>
+      <div class="chart-wrap">
+        <canvas id="balance-chart"></canvas>
+      </div>
+      <div class="chart-legend">
+        <span><span class="legend-dot" style="background:var(--teal);"></span>Remaining Balance</span>
+        <span><span class="legend-swatch" style="background:rgba(200,230,201,0.8);"></span>Equity Built</span>
+      </div>
+    </div>
+
+    <!-- Amortization schedule -->
+    <div class="card">
+      <div class="card-title">
+        Amortization Schedule
+        <span style="font-size:0.85rem; font-weight:400; color:var(--text-mid);" id="amort-sub"></span>
+      </div>
+      <div class="table-actions">
+        <button class="btn-ghost" id="amort-toggle-btn" onclick="toggleAmort()">&#9654; Show schedule</button>
+        <button class="btn-dl" onclick="downloadCSV()">&#8595; Download CSV</button>
+      </div>
+      <div class="amort-scroll" id="amort-scroll">
+        <table class="amort-table">
+          <thead id="amort-head"></thead>
+          <tbody id="amort-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="disclaimer">
+      * Results are estimates for informational purposes only. Actual payments may vary based on lender rounding,
+      escrow requirements, and PMI policy. PMI rate is auto-estimated at 0.8% annually — your lender's actual rate
+      will differ. Consult your lender or a licensed financial advisor before making mortgage decisions.
+    </p>
+
+  </div><!-- /results-wrap -->
+
+</div><!-- /yb-calc-wrap -->
+
+
+<script>
+  /* ── Helpers ── */
+  const $ = id => document.getElementById(id);
+  const fmtUSD = n => '$' + Math.abs(n).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  const fmtShort = n => {
+    if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'k';
+    return '$' + n.toFixed(0);
+  };
+
+  const MONTH_NAMES_LONG  = ['January','February','March','April','May','June',
+                              'July','August','September','October','November','December'];
+  const MONTH_NAMES_SHORT = ['Jan','Feb','Mar','Apr','May','Jun',
+                              'Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  /* Breakdown slice colors */
+  const COLORS = {
+    pi:        '#0B7D67',
+    tax:       '#4a6fa5',
+    insurance: '#e07b39',
+    pmi:       '#c0392b',
+    hoa:       '#7e57c2',
+  };
+
+  /* Shared state for CSV and resize redraws */
+  let _state = null;
+
+  /* ── Populate start-date dropdowns ── */
+  (function initDates() {
+    const now   = new Date();
+    const curM  = now.getMonth();       /* 0-indexed */
+    const curY  = now.getFullYear();
+    const nextM = (curM + 1) % 12;
+    const nextY = curM === 11 ? curY + 1 : curY;
+
+    const mSel = $('mc-start-month');
+    MONTH_NAMES_LONG.forEach((name, i) => {
+      const o = document.createElement('option');
+      o.value = i + 1; /* 1-indexed */
+      o.textContent = name;
+      if (i === nextM) o.selected = true;
+      mSel.appendChild(o);
+    });
+
+    const ySel = $('mc-start-year');
+    for (let y = curY - 2; y <= curY + 10; y++) {
+      const o = document.createElement('option');
+      o.value = y; o.textContent = y;
+      if (y === nextY) o.selected = true;
+      ySel.appendChild(o);
+    }
+  })();
+
+  /* ── Down payment two-way sync ── */
+  function syncDP(changed) {
+    const price  = parseFloat($('mc-price').value);
+    const dollar = parseFloat($('mc-dp-dollar').value);
+    const pct    = parseFloat($('mc-dp-pct').value);
+
+    if (changed === 'price') {
+      /* Keep % fixed, recalculate $ */
+      if (!isNaN(price) && !isNaN(pct))
+        $('mc-dp-dollar').value = +(price * pct / 100).toFixed(2) || '';
+    } else if (changed === 'dollar') {
+      /* Recalculate % */
+      if (!isNaN(dollar) && !isNaN(price) && price > 0)
+        $('mc-dp-pct').value = (dollar / price * 100).toFixed(1);
+    } else if (changed === 'pct') {
+      /* Recalculate $ */
+      if (!isNaN(pct) && !isNaN(price))
+        $('mc-dp-dollar').value = +(price * pct / 100).toFixed(2) || '';
+    }
+    refreshLoanAmount();
+  }
+
+  function refreshLoanAmount() {
+    const price = parseFloat($('mc-price').value)    || 0;
+    const dp    = parseFloat($('mc-dp-dollar').value) || 0;
+    const loan  = price - dp;
+    $('loan-amount-display').textContent = loan > 0 ? fmtUSD(loan) : '$—';
+  }
+
+  /* ── Toggle expenses section ── */
+  function toggleExpenses() {
+    $('mc-expenses-fields').classList.toggle('open', $('mc-expenses-toggle').checked);
+  }
+
+  /* ── Toggle amortization table ── */
+  function toggleAmort() {
+    const wrap = $('amort-scroll'), btn = $('amort-toggle-btn');
+    const open = wrap.classList.toggle('open');
+    btn.textContent = open ? '▼ Hide schedule' : '▶ Show schedule';
+  }
+
+  /* ── Core math ── */
+  function calcPayment(principal, annualRate, months) {
+    if (annualRate === 0) return principal / months;
+    const r = annualRate / 100 / 12;
+    return principal * r * Math.pow(1 + r, months) / (Math.pow(1 + r, months) - 1);
+  }
+
+  /* Add n months to a start date (month 1-indexed) */
+  function addMonths(startMonth, startYear, n) {
+    const d = new Date(startYear, startMonth - 1 + n, 1);
+    return { month: d.getMonth() + 1, year: d.getFullYear() };
+  }
+
+  function fmtMonthYear(month, year) {
+    return MONTH_NAMES_SHORT[month - 1] + ' ' + year;
+  }
+
+  /* ── CSV download ── */
+  function downloadCSV() {
+    if (!_state) return;
+    const { rows, hasPMI, hasExtras } = _state;
+    const BOM  = '\uFEFF';
+    const hdrs = ['Date', 'Payment', 'Principal', 'Interest'];
+    if (hasPMI)    hdrs.push('PMI');
+    if (hasExtras) hdrs.push('Tax + Insurance + HOA');
+    hdrs.push('Balance', 'Cumulative Interest');
+
+    const data = rows.map(r => {
+      const row = [r.date, r.total.toFixed(2), r.principal.toFixed(2), r.interest.toFixed(2)];
+      if (hasPMI)    row.push(r.pmi.toFixed(2));
+      if (hasExtras) row.push(r.extras.toFixed(2));
+      row.push(r.balance.toFixed(2), r.cumInt.toFixed(2));
+      return row;
+    });
+
+    const csv = [hdrs, ...data]
+      .map(r => r.map(c => '"' + String(c ?? '').replace(/"/g, '""') + '"').join(','))
+      .join('\r\n');
+    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'mortgage-amortization.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 100);
+  }
+
+  /* ── Main calculation ── */
+  function runCalc() {
+    const price       = parseFloat($('mc-price').value);
+    const dp          = parseFloat($('mc-dp-dollar').value) || 0;
+    const term        = parseInt($('mc-term').value);
+    const rate        = parseFloat($('mc-rate').value);
+    const startMonth  = parseInt($('mc-start-month').value);
+    const startYear   = parseInt($('mc-start-year').value);
+    const useExtras   = $('mc-expenses-toggle').checked;
+    const annualTax   = useExtras ? (parseFloat($('mc-tax').value)       || 0) : 0;
+    const annualIns   = useExtras ? (parseFloat($('mc-insurance').value) || 0) : 0;
+    const monthlyHOA  = useExtras ? (parseFloat($('mc-hoa').value)       || 0) : 0;
+
+    const errEl = $('mc-error');
+    errEl.style.display = 'none';
+    const fail = msg => { errEl.textContent = msg; errEl.style.display = 'block'; };
+
+    if (!price || price <= 0)   return fail('Please enter the home price.');
+    if (dp < 0)                 return fail('Down payment cannot be negative.');
+    if (dp >= price)            return fail('Down payment must be less than the home price.');
+    if (!rate || rate <= 0)     return fail('Please enter an interest rate.');
+
+    const loanAmount = price - dp;
+    const months     = term * 12;
+    const r          = rate / 100 / 12;
+    const piPayment  = calcPayment(loanAmount, rate, months);
+
+    /* PMI: auto-estimated at 0.8% of original loan/year when LTV > 80% */
+    const ltv       = loanAmount / price;
+    const hasPMI    = ltv > 0.80;
+    const basePMI   = hasPMI ? (loanAmount * 0.008 / 12) : 0; /* fixed monthly amount */
+    const pmiThresh = price * 0.80;                             /* balance below this = PMI off */
+
+    const monthlyTax = annualTax / 12;
+    const monthlyIns = annualIns / 12;
+    const hasExtras  = annualTax > 0 || annualIns > 0 || monthlyHOA > 0;
+
+    /* ── Build amortization rows ── */
+    let balance  = loanAmount;
+    let cumInt   = 0;
+    let pmiDropDate = null;
+
+    const rows         = [];
+    const chartPts     = [{ year: 0, balance: loanAmount }]; /* year-end snapshots + year 0 */
+
+    for (let m = 1; m <= months; m++) {
+      const interest   = balance * r;
+      const principal  = piPayment - interest;
+      balance          = Math.max(balance - principal, 0);
+      cumInt          += interest;
+
+      /* PMI drops when balance first falls at or below 80% of purchase price */
+      const monthPMI  = (balance < pmiThresh || !hasPMI) ? 0 : basePMI;
+      if (hasPMI && monthPMI === 0 && !pmiDropDate) {
+        pmiDropDate = addMonths(startMonth, startYear, m - 1);
+      }
+
+      const extras = monthlyTax + monthlyIns + monthlyHOA;
+      const total  = piPayment + monthPMI + extras;
+      const { month: rowM, year: rowY } = addMonths(startMonth, startYear, m - 1);
+
+      rows.push({ date: fmtMonthYear(rowM, rowY), total, principal, interest,
+                  pmi: monthPMI, extras, balance, cumInt, month: m });
+
+      if (m % 12 === 0 || m === months) {
+        chartPts.push({ year: Math.ceil(m / 12), balance });
+      }
+    }
+
+    /* Summary numbers */
+    const totalInterest = piPayment * months - loanAmount;
+    const totalCost     = piPayment * months;
+    const totalMonthly  = piPayment + basePMI + monthlyTax + monthlyIns + monthlyHOA;
+    const payoffDate    = addMonths(startMonth, startYear, months - 1);
+
+    /* Save state */
+    _state = { rows, hasPMI, hasExtras, chartPts, price, term,
+               piPayment, basePMI, monthlyTax, monthlyIns, monthlyHOA, totalMonthly };
+
+    /* ── PMI banner ── */
+    if (hasPMI) {
+      const dropStr = pmiDropDate
+        ? ` — estimated to drop around <strong>${fmtMonthYear(pmiDropDate.month, pmiDropDate.year)}</strong>`
+        : '';
+      $('pmi-banner-text').innerHTML =
+        `<strong>PMI applies</strong> — your down payment is under 20% (LTV: ${(ltv * 100).toFixed(1)}%).
+         PMI is estimated at <strong>${fmtUSD(basePMI)}/month</strong>${dropStr}.
+         Your lender will determine your actual PMI rate.`;
+      $('pmi-banner').classList.add('show');
+    } else {
+      $('pmi-banner').classList.remove('show');
+    }
+
+    /* ── Payment breakdown ── */
+    $('total-payment-big').textContent = fmtUSD(totalMonthly);
+    $('total-payment-sub').textContent = hasPMI
+      ? 'per month (PMI shown at initial rate — decreases as you pay down balance)'
+      : 'per month';
+
+    const breakdown = [
+      { label: 'Principal & Interest', amount: piPayment,   color: COLORS.pi },
+      { label: 'Property Tax',         amount: monthlyTax,  color: COLORS.tax },
+      { label: 'Home Insurance',       amount: monthlyIns,  color: COLORS.insurance },
+      { label: 'PMI',                  amount: basePMI,     color: COLORS.pmi },
+      { label: 'HOA Fees',             amount: monthlyHOA,  color: COLORS.hoa },
+    ].filter(b => b.amount > 0);
+
+    $('breakdown-list').innerHTML = breakdown.map(b => `
+      <div class="breakdown-item">
+        <span class="bd-dot" style="background:${b.color};"></span>
+        <span class="bd-label">${b.label}</span>
+        <span class="bd-amount">${fmtUSD(b.amount)}</span>
+        <div class="bd-bar"><div class="bd-fill" style="width:${(b.amount / totalMonthly * 100).toFixed(1)}%; background:${b.color};"></div></div>
+      </div>`).join('')
+      + `<div class="breakdown-item breakdown-total">
+           <span></span>
+           <span class="bd-label">Total</span>
+           <span class="bd-amount" style="font-size:1rem; color:var(--teal); font-weight:800;">${fmtUSD(totalMonthly)}</span>
+           <div class="bd-bar"><div class="bd-fill" style="width:100%; background:var(--teal);"></div></div>
+         </div>`;
+
+    /* ── Metric cards ── */
+    $('m-pi').textContent           = fmtUSD(piPayment);
+    $('m-total-cost').textContent   = fmtUSD(totalCost);
+    $('m-total-interest').textContent = fmtUSD(totalInterest);
+    $('m-payoff').textContent       = fmtMonthYear(payoffDate.month, payoffDate.year);
+    $('m-payoff-sub').textContent   = term + '-year term';
+
+    /* ── Amortization table ── */
+    $('amort-sub').textContent = ` — ${months.toLocaleString()} monthly payments`;
+
+    const pmiCol    = hasPMI;
+    const extrasCol = hasExtras;
+    const colSpan   = 6 + (pmiCol ? 1 : 0) + (extrasCol ? 1 : 0);
+
+    $('amort-head').innerHTML = `<tr>
+      <th>Date</th>
+      <th>Payment</th>
+      <th>Principal</th>
+      <th>Interest</th>
+      ${pmiCol    ? '<th>PMI</th>' : ''}
+      ${extrasCol ? '<th>Tax+Ins+HOA</th>' : ''}
+      <th>Balance</th>
+      <th>Cum. Interest</th>
+    </tr>`;
+
+    let prevYr = null;
+    $('amort-body').innerHTML = rows.map(r => {
+      const yr = Math.ceil(r.month / 12);
+      let hdr  = '';
+      if (yr !== prevYr) {
+        prevYr = yr;
+        hdr = `<tr class="yr-row"><td colspan="${colSpan}">Year ${yr}</td></tr>`;
+      }
+      return hdr + `<tr>
+        <td>${r.date}</td>
+        <td>${fmtUSD(r.total)}</td>
+        <td class="col-prin">${fmtUSD(r.principal)}</td>
+        <td class="col-int">${fmtUSD(r.interest)}</td>
+        ${pmiCol    ? `<td>${r.pmi > 0 ? fmtUSD(r.pmi) : '<span style="color:#bbb;">—</span>'}</td>` : ''}
+        ${extrasCol ? `<td>${fmtUSD(r.extras)}</td>` : ''}
+        <td class="col-bal">${fmtUSD(r.balance)}</td>
+        <td>${fmtUSD(r.cumInt)}</td>
+      </tr>`;
+    }).join('');
+
+    /* ── Show results ── */
+    $('results-wrap').classList.add('visible');
+    $('results-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    setTimeout(() => {
+      drawDonut(breakdown, totalMonthly);
+      drawBalanceChart(chartPts, price, term);
+    }, 60);
+  }
+
+  /* ── Donut chart ── */
+  function drawDonut(breakdown, total) {
+    const canvas = $('donut-chart');
+    const ctx    = canvas.getContext('2d');
+    const dpr    = window.devicePixelRatio || 1;
+    const size   = 160;
+
+    canvas.width  = size * dpr;
+    canvas.height = size * dpr;
+    canvas.style.width  = size + 'px';
+    canvas.style.height = size + 'px';
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, size, size);
+
+    const cx     = size / 2;
+    const cy     = size / 2;
+    const outerR = size / 2 - 6;
+    const innerR = outerR * 0.57;
+    const gap    = 0.025; /* radian gap between slices */
+    let startA   = -Math.PI / 2;
+
+    for (const seg of breakdown) {
+      if (seg.amount <= 0) continue;
+      const sweep = (seg.amount / total) * 2 * Math.PI - gap;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, outerR, startA, startA + sweep);
+      ctx.closePath();
+      ctx.fillStyle = seg.color;
+      ctx.fill();
+      startA += sweep + gap;
+    }
+
+    /* Donut hole */
+    ctx.beginPath();
+    ctx.arc(cx, cy, innerR, 0, 2 * Math.PI);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+
+    /* Center text */
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle    = '#0B7D67';
+    ctx.font         = 'bold 15px -apple-system, sans-serif';
+    ctx.fillText(fmtShort(total), cx, cy - 8);
+    ctx.fillStyle = '#888';
+    ctx.font      = '11px -apple-system, sans-serif';
+    ctx.fillText('/month', cx, cy + 9);
+  }
+
+  /* ── Balance & equity chart ── */
+  /*
+   * Shows the remaining loan balance as a declining teal line.
+   * The green shaded area above the balance line (up to the home price)
+   * represents equity built — showing the "two curves" story visually.
+   */
+  function drawBalanceChart(pts, homePrice, termYears) {
+    const canvas = $('balance-chart');
+    const ctx    = canvas.getContext('2d');
+    const dpr    = window.devicePixelRatio || 1;
+    const cW     = canvas.parentElement.clientWidth;
+    const cH     = 220;
+
+    canvas.width  = cW * dpr; canvas.height = cH * dpr;
+    canvas.style.width  = cW + 'px';
+    canvas.style.height = cH + 'px';
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, cW, cH);
+
+    const pad  = { top: 16, right: 16, bottom: 36, left: 76 };
+    const w    = cW - pad.left - pad.right;
+    const h    = cH - pad.top  - pad.bottom;
+    const n    = pts.length;
+    const maxY = homePrice;
+
+    const xAt = i   => pad.left + (i / (n - 1)) * w;
+    const yAt = val => pad.top  + (1 - Math.min(val, maxY) / maxY) * h;
+
+    /* Grid lines + Y labels */
+    ctx.strokeStyle = '#e8eaed'; ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const val = maxY * i / 4;
+      const y   = yAt(val);
+      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + w, y); ctx.stroke();
+      ctx.fillStyle = '#999'; ctx.font = '11px -apple-system, sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText(fmtShort(val), pad.left - 6, y + 4);
+    }
+
+    /* X labels */
+    const xStep = termYears <= 15 ? 5 : 10;
+    ctx.fillStyle = '#999'; ctx.font = '11px -apple-system, sans-serif'; ctx.textAlign = 'center';
+    for (let i = 0; i < n; i++) {
+      const yr = pts[i].year;
+      if (yr % xStep === 0 || yr === termYears) {
+        ctx.fillText('Yr ' + yr, xAt(i), cH - pad.bottom + 16);
+      }
+    }
+
+    /*
+     * Equity area: filled region from the balance line UP to the home price line.
+     * The path traces: (left, top) → along balance curve → (right, top) → close.
+     * The enclosed green shape = equity at each point in time.
+     */
+    ctx.beginPath();
+    ctx.moveTo(xAt(0), yAt(homePrice)); /* top-left: home price level */
+    for (let i = 0; i < n; i++) ctx.lineTo(xAt(i), yAt(pts[i].balance));
+    ctx.lineTo(xAt(n - 1), yAt(homePrice)); /* close across the top */
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(200, 230, 201, 0.55)';
+    ctx.fill();
+
+    /* Home price reference line (dashed gray at top) */
+    ctx.beginPath();
+    ctx.moveTo(xAt(0), yAt(homePrice));
+    ctx.lineTo(xAt(n - 1), yAt(homePrice));
+    ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1; ctx.setLineDash([5, 4]);
+    ctx.stroke(); ctx.setLineDash([]);
+
+    /* Balance line (teal) */
+    ctx.beginPath();
+    ctx.moveTo(xAt(0), yAt(pts[0].balance));
+    for (let i = 1; i < n; i++) ctx.lineTo(xAt(i), yAt(pts[i].balance));
+    ctx.strokeStyle = '#0B7D67'; ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    /* Label home price at top-right */
+    ctx.fillStyle = '#aaa'; ctx.font = '11px -apple-system, sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText('Home: ' + fmtShort(homePrice), pad.left + w - 2, yAt(homePrice) - 5);
+  }
+
+  /* ── Redraw charts on window resize ── */
+  let _rt;
+  window.addEventListener('resize', () => {
+    clearTimeout(_rt);
+    _rt = setTimeout(() => {
+      if (!_state || !$('results-wrap').classList.contains('visible')) return;
+      drawBalanceChart(_state.chartPts, _state.price, _state.term);
+    }, 200);
+  });
+
+  /* ── Enter key triggers calculation ── */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.closest('.yb-calc-wrap')) runCalc();
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compound Interest Calculator | Young Budgeteer</title>
+
+  <!--
+  =====================================================================
+  WORDPRESS EMBEDDING INSTRUCTIONS
+  =====================================================================
+  1. Open the page/post where you want this calculator
+  2. Add a new block → search for "Custom HTML"
+  3. Copy everything BETWEEN the <body> tags (from <div class="yb-calc-wrap">
+     down to and including the closing </script> tag)
+  4. Paste it into the Custom HTML block
+  5. The <style> and <script> tags paste fine in Gutenberg Custom HTML blocks
+
+  If your host strips <script> tags, install the "Code Snippets" plugin
+  and add the JS there, or use the "Elementor HTML" widget instead.
+  =====================================================================
+  -->
+
+  <style>
+    /* ── Design tokens ── */
+    :root {
+      --teal:        #0B7D67;
+      --teal-hover:  #0a6e5b;
+      --teal-pale:   #e8f5f2;
+      --teal-border: #b3d9d2;
+      --bg:          #efefef;
+      --surface:     #ffffff;
+      --border:      #dde0e3;
+      --text:        #1a1a1a;
+      --text-mid:    #555;
+      --text-muted:  #888;
+      --green:       #2e7d32;
+      --green-pale:  #e8f5e9;
+      --red:         #c62828;
+      --radius:      10px;
+      --shadow:      0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px 16px 48px;
+      line-height: 1.5;
+    }
+
+    .yb-calc-wrap { max-width: 920px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .calc-header { text-align: center; margin-bottom: 32px; }
+    .calc-header h1 {
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 700;
+      color: var(--teal);
+      margin-bottom: 10px;
+    }
+    .calc-header p { font-size: 1rem; color: var(--text-mid); max-width: 600px; margin: 0 auto; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      padding-bottom: 14px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--teal-pale);
+    }
+
+    /* ── Section labels ── */
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-mid);
+      margin-bottom: 16px;
+    }
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 22px 0;
+    }
+
+    /* ── Input grid ── */
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 560px) { .input-grid { grid-template-columns: 1fr; } }
+
+    .input-group { display: flex; flex-direction: column; gap: 5px; }
+    .input-group label { font-size: 0.875rem; font-weight: 600; color: var(--text); }
+    .input-group .hint { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
+
+    /* Input with prefix/suffix */
+    .field-wrap {
+      display: flex;
+      align-items: stretch;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: var(--surface);
+    }
+    .field-wrap:focus-within {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(11,125,103,0.12);
+    }
+    .field-affix {
+      display: flex;
+      align-items: center;
+      padding: 0 11px;
+      background: #f5f6f7;
+      color: var(--text-mid);
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-right: 1.5px solid var(--border);
+      user-select: none;
+      white-space: nowrap;
+    }
+    .field-affix.suffix { border-right: none; border-left: 1.5px solid var(--border); }
+    .field-wrap input, .field-wrap select {
+      flex: 1;
+      min-width: 0;
+      padding: 11px 12px;
+      border: none;
+      outline: none;
+      font-size: 1rem;
+      color: var(--text);
+      background: transparent;
+      -moz-appearance: textfield;
+    }
+    .field-wrap select { cursor: pointer; }
+    .field-wrap input::-webkit-outer-spin-button,
+    .field-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      margin-top: 24px;
+      background: var(--teal);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-primary:hover { background: var(--teal-hover); }
+    .btn-primary:active { transform: scale(0.99); }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: 1.5px solid var(--teal);
+      color: var(--teal);
+      background: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-ghost:hover { background: var(--teal-pale); }
+
+    .btn-dl {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 14px;
+      border: 1.5px solid var(--border);
+      color: var(--text-mid);
+      background: var(--surface);
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-dl:hover { background: #f0f0f0; border-color: #bbb; }
+
+    .table-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Error message ── */
+    .error-msg {
+      display: none;
+      color: var(--red);
+      font-size: 0.85rem;
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: #fff0f0;
+      border-radius: 5px;
+      border-left: 3px solid var(--red);
+    }
+
+    /* ── Results section ── */
+    .results-wrap { display: none; }
+    .results-wrap.visible { display: block; animation: slideUp 0.35s ease; }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Summary banner ── */
+    .summary-banner {
+      background: var(--teal-pale);
+      border: 1.5px solid var(--teal-border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.7;
+    }
+    .summary-banner strong { color: var(--teal); }
+    .summary-banner .highlight-green { color: var(--green); font-weight: 700; }
+
+    /* ── Metric cards ── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 680px) { .metrics-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 360px) { .metrics-grid { grid-template-columns: 1fr; } }
+
+    .metric-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px 16px;
+      text-align: center;
+    }
+    .metric-card.primary { background: var(--teal); color: #fff; }
+    .metric-card.savings { background: var(--green-pale); border: 1.5px solid #a5d6a7; }
+    .metric-lbl {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .metric-card.primary .metric-lbl { color: rgba(255,255,255,0.75); }
+    .metric-card.savings .metric-lbl { color: var(--green); }
+    .metric-val { font-size: 1.45rem; font-weight: 800; color: var(--text); line-height: 1.2; }
+    .metric-card.primary .metric-val { color: #fff; }
+    .metric-card.savings .metric-val { color: var(--green); }
+    .metric-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+    .metric-card.primary .metric-sub { color: rgba(255,255,255,0.65); }
+    .metric-card.savings .metric-sub { color: var(--green); opacity: 0.8; }
+
+    /* ── Chart ── */
+    .chart-wrap { position: relative; height: 260px; }
+    canvas { display: block; max-width: 100%; }
+    .chart-legend {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 12px;
+      font-size: 0.82rem;
+      color: var(--text-mid);
+      flex-wrap: wrap;
+    }
+    .legend-swatch {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+
+    /* ── Schedule table ── */
+    .amort-wrap {
+      display: none;
+      overflow-x: auto;
+      margin-top: 16px;
+    }
+    .amort-wrap.open { display: block; }
+
+    .amort-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      min-width: 560px;
+    }
+    .amort-table thead th {
+      padding: 9px 10px;
+      background: var(--teal);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.74rem;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .amort-table thead th:first-child { text-align: left; }
+    .amort-table tbody td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: right;
+      white-space: nowrap;
+    }
+    .amort-table tbody td:first-child { text-align: left; font-weight: 600; }
+    .amort-table tbody tr:nth-child(even) { background: #f8f9fa; }
+    .amort-table .col-interest { color: var(--teal); font-weight: 700; }
+    .amort-table .col-total-interest { color: var(--green); font-weight: 700; }
+
+    /* ── Disclaimer ── */
+    .disclaimer {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 4px;
+      padding: 0 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="yb-calc-wrap">
+
+  <!-- Header -->
+  <div class="calc-header">
+    <h1>Compound Interest Calculator</h1>
+    <p>See how much your money can grow — and discover how much of your final balance comes from interest rather than what you actually put in.</p>
+  </div>
+
+  <!-- ── Input card ── -->
+  <div class="card">
+    <div class="card-title">Investment Details</div>
+
+    <div class="section-label">Your Money</div>
+    <div class="input-grid">
+      <div class="input-group">
+        <label for="ci-principal">Starting Amount</label>
+        <div class="field-wrap">
+          <span class="field-affix">$</span>
+          <input type="number" id="ci-principal" placeholder="5,000" min="0" step="any">
+        </div>
+        <span class="hint">How much you're starting with today (can be $0)</span>
+      </div>
+      <div class="input-group">
+        <label for="ci-monthly">Monthly Contribution</label>
+        <div class="field-wrap">
+          <span class="field-affix">$</span>
+          <input type="number" id="ci-monthly" placeholder="200" min="0" step="any">
+        </div>
+        <span class="hint">Amount you add each month going forward (can be $0)</span>
+      </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <div class="section-label">Growth Settings</div>
+    <div class="input-grid">
+      <div class="input-group">
+        <label for="ci-rate">Annual Rate of Return</label>
+        <div class="field-wrap">
+          <input type="number" id="ci-rate" placeholder="7" min="0.01" max="100" step="0.01">
+          <span class="field-affix suffix">%</span>
+        </div>
+        <span class="hint">S&amp;P 500 historical avg ≈ 7% (inflation-adjusted)</span>
+      </div>
+      <div class="input-group">
+        <label for="ci-years">Time Period</label>
+        <div class="field-wrap">
+          <input type="number" id="ci-years" placeholder="30" min="1" max="100" step="1">
+          <span class="field-affix suffix">years</span>
+        </div>
+        <span class="hint">How long you plan to let the money grow</span>
+      </div>
+      <div class="input-group">
+        <label for="ci-freq">Compounding Frequency</label>
+        <div class="field-wrap">
+          <select id="ci-freq">
+            <option value="12" selected>Monthly</option>
+            <option value="365">Daily</option>
+            <option value="4">Quarterly</option>
+            <option value="2">Semi-Annually</option>
+            <option value="1">Annually</option>
+          </select>
+        </div>
+        <span class="hint">How often interest is calculated and added to your balance</span>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="runCalc()">Calculate My Growth</button>
+    <div class="error-msg" id="ci-error"></div>
+  </div><!-- /card -->
+
+
+  <!-- ── Results ── -->
+  <div class="results-wrap" id="results-wrap">
+
+    <!-- Summary banner -->
+    <div class="summary-banner" id="ci-summary"></div>
+
+    <!-- Metric cards -->
+    <div class="metrics-grid">
+      <div class="metric-card primary">
+        <div class="metric-lbl">Final Balance</div>
+        <div class="metric-val" id="m-final">—</div>
+        <div class="metric-sub">after <span id="m-years-sub">—</span> years</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-lbl">Total Contributed</div>
+        <div class="metric-val" id="m-contrib">—</div>
+        <div class="metric-sub">what you personally put in</div>
+      </div>
+      <div class="metric-card savings">
+        <div class="metric-lbl">Interest Earned</div>
+        <div class="metric-val" id="m-interest">—</div>
+        <div class="metric-sub">money the market added</div>
+      </div>
+      <div class="metric-card savings">
+        <div class="metric-lbl">Growth Multiple</div>
+        <div class="metric-val" id="m-multiple">—</div>
+        <div class="metric-sub">times your money grew</div>
+      </div>
+    </div>
+
+    <!-- Growth chart -->
+    <div class="card">
+      <div class="card-title">Growth Over Time</div>
+      <div class="chart-wrap">
+        <canvas id="growth-chart"></canvas>
+      </div>
+      <div class="chart-legend">
+        <span><span class="legend-swatch" style="background:#a5d6a7;"></span>Your Contributions</span>
+        <span><span class="legend-swatch" style="background:rgba(11,125,103,0.55);"></span>Interest Earned</span>
+      </div>
+    </div>
+
+    <!-- Year-by-year schedule -->
+    <div class="card">
+      <div class="card-title">Year-by-Year Breakdown</div>
+      <div class="table-actions">
+        <button class="btn-ghost" id="schedule-toggle-btn" onclick="toggleSchedule()">&#9654; Show full schedule</button>
+        <button class="btn-dl" onclick="downloadCSV()">&#8595; Download CSV</button>
+      </div>
+      <div class="amort-wrap" id="schedule-wrap">
+        <table class="amort-table">
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th>Starting Balance</th>
+              <th>Annual Contribution</th>
+              <th>Interest Earned</th>
+              <th>Ending Balance</th>
+              <th>Total Contributed</th>
+              <th>Total Interest</th>
+            </tr>
+          </thead>
+          <tbody id="schedule-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="disclaimer">
+      * Results are estimates for educational purposes only. This calculator assumes a fixed, consistent rate of return
+      and does not account for taxes, investment fees, inflation, or market volatility. Past market performance does not
+      guarantee future results. Consult a licensed financial advisor before making investment decisions.
+    </p>
+
+  </div><!-- /results-wrap -->
+
+</div><!-- /yb-calc-wrap -->
+
+
+<script>
+  /* ── Helpers ── */
+  const $ = id => document.getElementById(id);
+  const fmtUSD = n => '$' + Math.abs(n).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  const fmtShort = n => {
+    if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'k';
+    return '$' + n.toFixed(0);
+  };
+
+  /* Shared state for CSV downloads */
+  let _state = null;
+
+  /* ── Core calculation ── */
+  /*
+   * Simulates growth month-by-month for accuracy across all compounding frequencies.
+   * Converts the chosen compounding frequency to an effective monthly rate so
+   * monthly contributions integrate cleanly regardless of how often the bank compounds.
+   *
+   * Effective monthly rate = (1 + annualRate / compFreq) ^ (compFreq / 12) − 1
+   *
+   * Contributions are made at the beginning of each month (before interest accrues),
+   * which is the optimistic (and most motivating) convention.
+   */
+  function buildGrowthData(principal, monthlyContrib, annualRate, years, compFreq) {
+    const r = Math.pow(1 + (annualRate / 100) / compFreq, compFreq / 12) - 1;
+
+    let balance      = principal;
+    let totalContrib = principal;
+
+    const yearlyRows = [];
+
+    for (let yr = 1; yr <= years; yr++) {
+      const startBalance   = balance;
+      const annualContrib  = monthlyContrib * 12;
+
+      /* Month-by-month simulation within this year */
+      for (let m = 0; m < 12; m++) {
+        balance += monthlyContrib;   /* contribute first */
+        balance *= (1 + r);          /* then earn interest */
+      }
+
+      totalContrib += annualContrib;
+      const yearInterest  = balance - startBalance - annualContrib;
+      const totalInterest = balance - totalContrib;
+
+      yearlyRows.push({
+        year:         yr,
+        startBalance,
+        annualContrib,
+        yearInterest,
+        endBalance:   balance,
+        totalContrib,
+        totalInterest
+      });
+    }
+
+    return {
+      yearlyRows,
+      finalBalance:  balance,
+      totalContrib,
+      totalInterest: balance - totalContrib
+    };
+  }
+
+  /* ── Toggle year-by-year schedule ── */
+  function toggleSchedule() {
+    const wrap = $('schedule-wrap'), btn = $('schedule-toggle-btn');
+    const open = wrap.classList.toggle('open');
+    btn.textContent = open ? '▼ Hide schedule' : '▶ Show full schedule';
+  }
+
+  /* ── CSV download ── */
+  function downloadCSV() {
+    if (!_state) return;
+    const { yearlyRows } = _state;
+    const BOM     = '\uFEFF';
+    const headers = ['Year', 'Starting Balance', 'Annual Contribution', 'Interest Earned This Year',
+                     'Ending Balance', 'Total Contributed', 'Total Interest'];
+    const rows = yearlyRows.map(r => [
+      r.year,
+      r.startBalance.toFixed(2),
+      r.annualContrib.toFixed(2),
+      r.yearInterest.toFixed(2),
+      r.endBalance.toFixed(2),
+      r.totalContrib.toFixed(2),
+      r.totalInterest.toFixed(2)
+    ]);
+    const csv = [headers, ...rows]
+      .map(r => r.map(c => '"' + String(c ?? '').replace(/"/g, '""') + '"').join(','))
+      .join('\r\n');
+    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'compound-interest-schedule.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 100);
+  }
+
+  /* ── Main calculation ── */
+  function runCalc() {
+    const principal     = parseFloat($('ci-principal').value) || 0;
+    const monthlyContrib = parseFloat($('ci-monthly').value)  || 0;
+    const rate          = parseFloat($('ci-rate').value);
+    const years         = parseInt($('ci-years').value);
+    const compFreq      = parseInt($('ci-freq').value);
+
+    const errEl = $('ci-error');
+    errEl.style.display = 'none';
+    const fail = msg => { errEl.textContent = msg; errEl.style.display = 'block'; };
+
+    if (principal <= 0 && monthlyContrib <= 0)
+      return fail('Please enter a starting amount, a monthly contribution, or both.');
+    if (!rate || rate <= 0)
+      return fail('Please enter an annual rate of return.');
+    if (!years || years < 1)
+      return fail('Please enter at least 1 year.');
+
+    const data = buildGrowthData(principal, monthlyContrib, rate, years, compFreq);
+    _state = { ...data, principal, monthlyContrib, rate, years, compFreq };
+
+    const { finalBalance, totalContrib, totalInterest, yearlyRows } = data;
+    const multiple = totalContrib > 0 ? (finalBalance / totalContrib).toFixed(2) + '×' : '—';
+
+    /* ── Metric cards ── */
+    $('m-final').textContent    = fmtUSD(finalBalance);
+    $('m-contrib').textContent  = fmtUSD(totalContrib);
+    $('m-interest').textContent = fmtUSD(totalInterest);
+    $('m-multiple').textContent = multiple;
+    $('m-years-sub').textContent = years;
+
+    /* ── Summary banner ── */
+    const freqLabels = { 1: 'annually', 2: 'semi-annually', 4: 'quarterly', 12: 'monthly', 365: 'daily' };
+    const freqLabel  = freqLabels[compFreq] || 'monthly';
+
+    const parts = [];
+    if (principal > 0)      parts.push(`starting with <strong>${fmtUSD(principal)}</strong>`);
+    if (monthlyContrib > 0) parts.push(`contributing <strong>${fmtUSD(monthlyContrib)}/month</strong>`);
+
+    const interestPct = totalContrib > 0
+      ? Math.round((totalInterest / finalBalance) * 100) : 0;
+
+    $('ci-summary').innerHTML =
+      `By ${parts.join(' and ')}, at <strong>${rate}%</strong> compounded ${freqLabel}
+       for <strong>${years} year${years !== 1 ? 's' : ''}</strong>, your money grows to
+       <strong style="font-size:1.05em;">${fmtUSD(finalBalance)}</strong>.
+       You put in <strong>${fmtUSD(totalContrib)}</strong> — and the remaining
+       <span class="highlight-green">${fmtUSD(totalInterest)} (${interestPct}% of your total balance)</span>
+       is interest that compounded while you went about your life.`;
+
+    /* ── Year-by-year table ── */
+    $('schedule-body').innerHTML = yearlyRows.map(r => `
+      <tr>
+        <td>Year ${r.year}</td>
+        <td>${fmtUSD(r.startBalance)}</td>
+        <td>${fmtUSD(r.annualContrib)}</td>
+        <td class="col-interest">${fmtUSD(r.yearInterest)}</td>
+        <td>${fmtUSD(r.endBalance)}</td>
+        <td>${fmtUSD(r.totalContrib)}</td>
+        <td class="col-total-interest">${fmtUSD(r.totalInterest)}</td>
+      </tr>`).join('');
+
+    /* ── Show results ── */
+    $('results-wrap').classList.add('visible');
+    $('results-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    /* Build chart data: prepend year 0 as the starting point */
+    const chartPts = [
+      { year: 0, endBalance: principal, totalContrib: principal },
+      ...yearlyRows.map(r => ({ year: r.year, endBalance: r.endBalance, totalContrib: r.totalContrib }))
+    ];
+
+    setTimeout(() => drawChart(chartPts), 60);
+  }
+
+  /* ── Stacked area chart ── */
+  /*
+   * Draws two filled areas:
+   *   Bottom (green) = total contributions over time — the "what you put in" layer
+   *   Top (teal)     = interest earned — the "compounding magic" layer
+   * The growing gap between contributions and balance IS the story.
+   */
+  function drawChart(pts) {
+    const canvas = $('growth-chart');
+    const ctx    = canvas.getContext('2d');
+    const dpr    = window.devicePixelRatio || 1;
+    const cW     = canvas.parentElement.clientWidth;
+    const cH     = 260;
+
+    canvas.width  = cW * dpr; canvas.height = cH * dpr;
+    canvas.style.width  = cW + 'px';
+    canvas.style.height = cH + 'px';
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, cW, cH);
+
+    const pad   = { top: 16, right: 16, bottom: 36, left: 76 };
+    const w     = cW - pad.left - pad.right;
+    const h     = cH - pad.top  - pad.bottom;
+    const n     = pts.length;
+    const maxY  = pts[n - 1].endBalance;
+
+    const xAt = i   => pad.left + (i / (n - 1)) * w;
+    const yAt = val => pad.top  + (1 - val / maxY) * h;
+
+    /* Grid lines + Y-axis labels */
+    ctx.strokeStyle = '#e8eaed'; ctx.lineWidth = 1;
+    const ticks = 5;
+    for (let i = 0; i <= ticks; i++) {
+      const val = maxY * i / ticks;
+      const y   = yAt(val);
+      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + w, y); ctx.stroke();
+      ctx.fillStyle = '#999';
+      ctx.font = '11px -apple-system, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(fmtShort(val), pad.left - 6, y + 4);
+    }
+
+    /* X-axis year labels */
+    const years = pts[n - 1].year;
+    const xStep = years <= 10 ? 1 : years <= 20 ? 5 : years <= 40 ? 5 : 10;
+    ctx.fillStyle = '#999';
+    ctx.font = '11px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    for (let idx = 0; idx < n; idx++) {
+      const yr = pts[idx].year;
+      if (yr % xStep === 0 || yr === years) {
+        ctx.fillText('Yr ' + yr, xAt(idx), cH - pad.bottom + 16);
+      }
+    }
+
+    /* ── Contributions area (bottom, solid green) ── */
+    ctx.beginPath();
+    ctx.moveTo(xAt(0), yAt(pts[0].totalContrib));
+    for (let i = 1; i < n; i++) ctx.lineTo(xAt(i), yAt(pts[i].totalContrib));
+    ctx.lineTo(xAt(n - 1), yAt(0));
+    ctx.lineTo(xAt(0),     yAt(0));
+    ctx.closePath();
+    ctx.fillStyle = '#c8e6c9';
+    ctx.fill();
+
+    /* ── Interest area (top, teal — the space between contribution line and balance line) ── */
+    ctx.beginPath();
+    ctx.moveTo(xAt(0), yAt(pts[0].endBalance));
+    for (let i = 1; i < n; i++) ctx.lineTo(xAt(i), yAt(pts[i].endBalance));
+    for (let i = n - 1; i >= 0; i--) ctx.lineTo(xAt(i), yAt(pts[i].totalContrib));
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(11,125,103,0.30)';
+    ctx.fill();
+
+    /* ── Balance line (on top of teal area) ── */
+    ctx.beginPath();
+    ctx.moveTo(xAt(0), yAt(pts[0].endBalance));
+    for (let i = 1; i < n; i++) ctx.lineTo(xAt(i), yAt(pts[i].endBalance));
+    ctx.strokeStyle = '#0B7D67';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([]);
+    ctx.stroke();
+
+    /* ── Contribution line ── */
+    ctx.beginPath();
+    ctx.moveTo(xAt(0), yAt(pts[0].totalContrib));
+    for (let i = 1; i < n; i++) ctx.lineTo(xAt(i), yAt(pts[i].totalContrib));
+    ctx.strokeStyle = '#43a047';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    /* ── Final balance label at end of teal line ── */
+    const lastX = xAt(n - 1);
+    const lastY = yAt(pts[n - 1].endBalance);
+    ctx.fillStyle = '#0B7D67';
+    ctx.font = 'bold 11px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(fmtShort(pts[n - 1].endBalance), lastX - 4, lastY - 6);
+  }
+
+  /* ── Redraw chart on window resize ── */
+  let _rt;
+  window.addEventListener('resize', () => {
+    clearTimeout(_rt);
+    _rt = setTimeout(() => {
+      if (!_state || !$('results-wrap').classList.contains('visible')) return;
+      const chartPts = [
+        { year: 0, endBalance: _state.principal, totalContrib: _state.principal },
+        ..._state.yearlyRows.map(r => ({ year: r.year, endBalance: r.endBalance, totalContrib: r.totalContrib }))
+      ];
+      drawChart(chartPts);
+    }, 200);
+  });
+
+  /* ── Enter key triggers calculation ── */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.closest('.yb-calc-wrap')) runCalc();
+  });
+</script>
+
+</body>
+</html>

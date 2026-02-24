@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mortgage Refinance Calculator | Young Budgeteer</title>
+
+  <!--
+  =====================================================================
+  WORDPRESS EMBEDDING INSTRUCTIONS
+  =====================================================================
+  1. Open the page/post where you want this calculator
+  2. Add a new block → search for "Custom HTML"
+  3. Copy everything BETWEEN the <body> tags (from <div class="yb-calc-wrap">
+     down to and including the closing </script> tag)
+  4. Paste it into the Custom HTML block
+  5. The <style> and <script> tags paste fine in Gutenberg Custom HTML blocks
+
+  If your host strips <script> tags, install the "Code Snippets" plugin
+  and add the JS there, or use the "Elementor HTML" widget instead.
+  =====================================================================
+  -->
+
+  <style>
+    /* ── Design tokens ── */
+    :root {
+      --teal:        #0B7D67;
+      --teal-hover:  #0a6e5b;
+      --teal-pale:   #e8f5f2;
+      --teal-border: #b3d9d2;
+      --bg:          #efefef;
+      --surface:     #ffffff;
+      --border:      #dde0e3;
+      --text:        #1a1a1a;
+      --text-mid:    #555;
+      --text-muted:  #888;
+      --green:       #2e7d32;
+      --green-pale:  #e8f5e9;
+      --red:         #c62828;
+      --radius:      10px;
+      --shadow:      0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px 16px 48px;
+      line-height: 1.5;
+    }
+
+    .yb-calc-wrap { max-width: 920px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .calc-header { text-align: center; margin-bottom: 32px; }
+    .calc-header h1 {
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 700;
+      color: var(--teal);
+      margin-bottom: 10px;
+    }
+    .calc-header p { font-size: 1rem; color: var(--text-mid); max-width: 640px; margin: 0 auto; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      padding-bottom: 14px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--teal-pale);
+    }
+
+    /* ── Section labels ── */
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-mid);
+      margin-bottom: 16px;
+    }
+    .optional-tag {
+      font-size: 0.71rem;
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: 0;
+      color: var(--text-muted);
+      background: #f0f0f0;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 22px 0;
+    }
+
+    /* ── Input grid ── */
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 560px) { .input-grid { grid-template-columns: 1fr; } }
+
+    .input-group { display: flex; flex-direction: column; gap: 5px; }
+    .input-group label { font-size: 0.875rem; font-weight: 600; color: var(--text); }
+    .input-group .hint { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
+
+    /* Input with prefix/suffix */
+    .field-wrap {
+      display: flex;
+      align-items: stretch;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: var(--surface);
+    }
+    .field-wrap:focus-within {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(11,125,103,0.12);
+    }
+    .field-affix {
+      display: flex;
+      align-items: center;
+      padding: 0 11px;
+      background: #f5f6f7;
+      color: var(--text-mid);
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-right: 1.5px solid var(--border);
+      user-select: none;
+      white-space: nowrap;
+    }
+    .field-affix.suffix { border-right: none; border-left: 1.5px solid var(--border); }
+    .field-wrap input, .field-wrap select {
+      flex: 1;
+      min-width: 0;
+      padding: 11px 12px;
+      border: none;
+      outline: none;
+      font-size: 1rem;
+      color: var(--text);
+      background: transparent;
+      -moz-appearance: textfield;
+    }
+    .field-wrap select { cursor: pointer; }
+    .field-wrap input::-webkit-outer-spin-button,
+    .field-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    /* Term row (years + months) */
+    .term-row { display: flex; gap: 10px; }
+    .term-row .field-wrap { flex: 1; }
+
+    /* Date row */
+    .date-row { display: flex; gap: 10px; }
+    .date-row .field-wrap { flex: 1; }
+    .date-row .field-wrap.year-field { max-width: 112px; }
+
+    /* Calculated current payment pill */
+    .payment-pill {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      background: var(--teal-pale);
+      border: 1.5px solid var(--teal-border);
+      border-radius: 7px;
+      margin-top: 16px;
+    }
+    .pp-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--teal);
+    }
+    .pp-value {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--teal);
+    }
+    .pp-note { font-size: 0.78rem; color: var(--teal); opacity: 0.7; margin-left: auto; }
+
+    /* Closing cost toggle */
+    .cost-toggle {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    .cost-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-mid);
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+      user-select: none;
+    }
+    .cost-option input[type="radio"] {
+      width: 15px; height: 15px;
+      accent-color: var(--teal);
+      cursor: pointer;
+    }
+    .cost-option.selected {
+      border-color: var(--teal);
+      background: var(--teal-pale);
+      color: var(--teal);
+    }
+
+    /* Optional cash-out toggle */
+    .cashout-toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+      margin-top: 6px;
+    }
+    .cashout-toggle-row input[type="checkbox"] {
+      width: 16px; height: 16px;
+      accent-color: var(--teal);
+      cursor: pointer;
+    }
+    .cashout-toggle-row span { font-size: 0.9rem; font-weight: 600; color: var(--teal); }
+    .cashout-field { display: none; margin-top: 14px; max-width: 280px; }
+    .cashout-field.open { display: block; }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      margin-top: 24px;
+      background: var(--teal);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-primary:hover { background: var(--teal-hover); }
+    .btn-primary:active { transform: scale(0.99); }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: 1.5px solid var(--teal);
+      color: var(--teal);
+      background: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-ghost:hover { background: var(--teal-pale); }
+
+    .btn-dl {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 14px;
+      border: 1.5px solid var(--border);
+      color: var(--text-mid);
+      background: var(--surface);
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-dl:hover { background: #f0f0f0; border-color: #bbb; }
+
+    .table-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Error ── */
+    .error-msg {
+      display: none;
+      color: var(--red);
+      font-size: 0.85rem;
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: #fff0f0;
+      border-radius: 5px;
+      border-left: 3px solid var(--red);
+    }
+
+    /* ── Results ── */
+    .results-wrap { display: none; }
+    .results-wrap.visible { display: block; animation: slideUp 0.35s ease; }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Situation banners ── */
+    .situation-banner {
+      display: flex;
+      gap: 12px;
+      padding: 15px 18px;
+      margin-bottom: 20px;
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    .situation-banner .ban-icon { font-size: 1.25rem; flex-shrink: 0; margin-top: 1px; }
+    .situation-banner.good {
+      background: var(--teal-pale);
+      border: 1.5px solid var(--teal-border);
+      color: #0a4a3a;
+    }
+    .situation-banner.caution {
+      background: #fff8e1;
+      border: 1.5px solid #ffecb3;
+      color: #6d4c00;
+    }
+    .situation-banner.warning {
+      background: #fff0f0;
+      border: 1.5px solid #ffcdd2;
+      color: #7a1a1a;
+    }
+
+    /* Term extension notice */
+    .term-notice {
+      display: none;
+      gap: 12px;
+      padding: 13px 18px;
+      margin-bottom: 20px;
+      background: #fff8e1;
+      border: 1.5px solid #ffe082;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      color: #5d3d00;
+      line-height: 1.55;
+    }
+    .term-notice.show { display: flex; }
+    .term-notice .ban-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+
+    /* ── Metric cards ── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 680px) { .metrics-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 360px) { .metrics-grid { grid-template-columns: 1fr; } }
+
+    .metric-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px 16px;
+      text-align: center;
+    }
+    .metric-card.primary { background: var(--teal); color: #fff; }
+    .metric-card.savings { background: var(--green-pale); border: 1.5px solid #a5d6a7; }
+    .metric-card.caution { background: #fff8e1; border: 1.5px solid #ffe082; }
+    .metric-lbl {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .metric-card.primary .metric-lbl { color: rgba(255,255,255,0.75); }
+    .metric-card.savings .metric-lbl { color: var(--green); }
+    .metric-card.caution .metric-lbl { color: #b8860b; }
+    .metric-val { font-size: 1.45rem; font-weight: 800; color: var(--text); line-height: 1.2; }
+    .metric-card.primary .metric-val { color: #fff; }
+    .metric-card.savings .metric-val { color: var(--green); }
+    .metric-card.caution .metric-val { color: #b8860b; }
+    .metric-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+    .metric-card.primary .metric-sub { color: rgba(255,255,255,0.65); }
+    .metric-card.savings .metric-sub { color: var(--green); opacity: 0.8; }
+    .metric-card.caution .metric-sub { color: #8a6800; }
+
+    /* ── Comparison table ── */
+    .compare-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .compare-table thead th {
+      padding: 10px 14px;
+      background: var(--teal-pale);
+      color: var(--teal);
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      text-align: right;
+    }
+    .compare-table thead th:first-child { text-align: left; }
+    .compare-table tbody td {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      text-align: right;
+    }
+    .compare-table tbody td:first-child { text-align: left; font-weight: 600; color: var(--text-mid); }
+    .compare-table tbody tr:last-child td { border-bottom: none; }
+    .compare-table .col-new  { color: var(--teal); font-weight: 700; }
+    .compare-table .col-save { color: var(--green); font-weight: 700; }
+    .compare-table .col-cost { color: var(--red); font-weight: 700; }
+
+    /* ── Chart ── */
+    .chart-wrap { position: relative; height: 230px; }
+    canvas { display: block; max-width: 100%; }
+    .chart-legend {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 12px;
+      font-size: 0.82rem;
+      color: var(--text-mid);
+      flex-wrap: wrap;
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 24px;
+      height: 3px;
+      border-radius: 2px;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    /* ── Year-by-year table ── */
+    .amort-wrap {
+      display: none;
+      overflow-x: auto;
+      margin-top: 16px;
+    }
+    .amort-wrap.open { display: block; }
+
+    .amort-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      min-width: 580px;
+    }
+    .amort-table thead th {
+      padding: 9px 10px;
+      background: var(--teal);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.74rem;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .amort-table thead th:first-child { text-align: left; }
+    .amort-table tbody td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: right;
+      white-space: nowrap;
+    }
+    .amort-table tbody td:first-child { text-align: left; font-weight: 600; color: var(--text-mid); }
+    .amort-table tbody tr:nth-child(even) { background: #f8f9fa; }
+    .amort-table .col-new-bal  { color: var(--teal); font-weight: 700; }
+    .amort-table .col-int-save { color: var(--green); font-weight: 700; }
+    .amort-table .col-paid     { color: #bbb; font-style: italic; }
+
+    /* ── Disclaimer ── */
+    .disclaimer {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 4px;
+      padding: 0 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="yb-calc-wrap">
+
+  <!-- Header -->
+  <div class="calc-header">
+    <h1>Mortgage Refinance Calculator</h1>
+    <p>See your new monthly payment, how long until you break even on closing costs, and whether refinancing actually saves you money over the life of the loan.</p>
+  </div>
+
+  <!-- ── Input card ── -->
+  <div class="card">
+    <div class="card-title">Refinance Details</div>
+
+    <!-- Current Loan -->
+    <div class="section-label">Your Current Loan</div>
+    <div class="input-grid">
+      <div class="input-group">
+        <label for="r-cur-balance">Remaining Balance</label>
+        <div class="field-wrap">
+          <span class="field-affix">$</span>
+          <input type="number" id="r-cur-balance" placeholder="285,000" min="1" step="any" oninput="refreshCurrentPayment()">
+        </div>
+        <span class="hint">Your current principal balance (check your statement)</span>
+      </div>
+      <div class="input-group">
+        <label for="r-cur-rate">Current Interest Rate</label>
+        <div class="field-wrap">
+          <input type="number" id="r-cur-rate" placeholder="7.25" min="0.01" max="30" step="0.01" oninput="refreshCurrentPayment()">
+          <span class="field-affix suffix">%</span>
+        </div>
+        <span class="hint">Your existing loan's rate (not APR)</span>
+      </div>
+      <div class="input-group">
+        <label>Remaining Term</label>
+        <div class="term-row">
+          <div class="field-wrap">
+            <input type="number" id="r-cur-years" placeholder="24" min="0" max="40" step="1" oninput="refreshCurrentPayment()">
+            <span class="field-affix suffix">yrs</span>
+          </div>
+          <div class="field-wrap">
+            <input type="number" id="r-cur-months" placeholder="0" min="0" max="11" step="1" oninput="refreshCurrentPayment()">
+            <span class="field-affix suffix">mo</span>
+          </div>
+        </div>
+        <span class="hint">Years and months left on your current loan</span>
+      </div>
+    </div>
+
+    <!-- Current payment pill: updates live as user fills in current loan details -->
+    <div class="payment-pill">
+      <span class="pp-label">Current Monthly Payment</span>
+      <span class="pp-value" id="current-pmt-display">$—</span>
+      <span class="pp-note" id="current-pmt-note">fill in loan details above</span>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- New Loan -->
+    <div class="section-label">New Loan After Refinance</div>
+    <div class="input-grid">
+      <div class="input-group">
+        <label for="r-new-rate">New Interest Rate</label>
+        <div class="field-wrap">
+          <input type="number" id="r-new-rate" placeholder="6.25" min="0.01" max="30" step="0.01">
+          <span class="field-affix suffix">%</span>
+        </div>
+        <span class="hint">Rate from your lender's refinance quote</span>
+      </div>
+      <div class="input-group">
+        <label for="r-new-term">New Loan Term</label>
+        <div class="field-wrap">
+          <input type="number" id="r-new-term" placeholder="30" min="1" max="40" step="1">
+          <span class="field-affix suffix">years</span>
+        </div>
+        <span class="hint">Resetting to 30 years lowers payment but extends payoff</span>
+      </div>
+      <div class="input-group">
+        <label for="r-closing-costs">Closing Costs</label>
+        <div class="field-wrap">
+          <span class="field-affix">$</span>
+          <input type="number" id="r-closing-costs" placeholder="6,000" min="0" step="any">
+        </div>
+        <span class="hint">Typically 2–5% of loan amount ($3k–$9k on a $300k loan)</span>
+      </div>
+      <div class="input-group">
+        <label>Closing Cost Handling</label>
+        <div class="cost-toggle" id="cost-toggle">
+          <label class="cost-option selected" id="opt-upfront">
+            <input type="radio" name="cost-method" value="upfront" checked onchange="selectCostMethod('upfront')">
+            Pay Upfront
+          </label>
+          <label class="cost-option" id="opt-rollin">
+            <input type="radio" name="cost-method" value="rollin" onchange="selectCostMethod('rollin')">
+            Roll Into Loan
+          </label>
+        </div>
+        <span class="hint">Rolling in = no cash out of pocket, but you pay interest on the costs</span>
+      </div>
+    </div>
+
+    <!-- Optional cash-out -->
+    <div style="margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border);">
+      <label class="cashout-toggle-row">
+        <input type="checkbox" id="cashout-toggle" onchange="toggleCashout()">
+        <span>&#43; Cash-out refinance (optional — borrow more than you owe)</span>
+      </label>
+      <div class="cashout-field" id="cashout-field">
+        <div class="input-group">
+          <label for="r-cashout">Cash-Out Amount</label>
+          <div class="field-wrap">
+            <span class="field-affix">$</span>
+            <input type="number" id="r-cashout" placeholder="25,000" min="0" step="any">
+          </div>
+          <span class="hint">Added to new loan balance. Common for home improvements or debt consolidation.</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- Start Date -->
+    <div class="section-label">First Payment Date</div>
+    <div class="input-grid">
+      <div class="input-group">
+        <label>First New Payment</label>
+        <div class="date-row">
+          <div class="field-wrap">
+            <select id="r-start-month"></select>
+          </div>
+          <div class="field-wrap year-field">
+            <select id="r-start-year"></select>
+          </div>
+        </div>
+        <span class="hint">Labels your amortization schedule with real dates</span>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="runCalc()">Calculate My Refinance Savings</button>
+    <div class="error-msg" id="r-error"></div>
+  </div><!-- /card -->
+
+
+  <!-- ── Results ── -->
+  <div class="results-wrap" id="results-wrap">
+
+    <!-- Term extension notice -->
+    <div class="term-notice" id="term-notice">
+      <span class="ban-icon">&#9888;</span>
+      <span id="term-notice-text"></span>
+    </div>
+
+    <!-- Situation banner -->
+    <div class="situation-banner" id="situation-banner">
+      <span class="ban-icon" id="situation-icon"></span>
+      <span id="situation-text"></span>
+    </div>
+
+    <!-- Metric cards -->
+    <div class="metrics-grid">
+      <div class="metric-card primary">
+        <div class="metric-lbl">New Monthly Payment</div>
+        <div class="metric-val" id="m-new-pmt">—</div>
+        <div class="metric-sub" id="m-new-pmt-sub">/month</div>
+      </div>
+      <div class="metric-card" id="m-savings-card">
+        <div class="metric-lbl">Monthly Savings</div>
+        <div class="metric-val" id="m-savings">—</div>
+        <div class="metric-sub" id="m-savings-sub">vs. current payment</div>
+      </div>
+      <div class="metric-card" id="m-breakeven-card">
+        <div class="metric-lbl">Break-Even Point</div>
+        <div class="metric-val" id="m-breakeven">—</div>
+        <div class="metric-sub" id="m-breakeven-sub">months to recoup closing costs</div>
+      </div>
+      <div class="metric-card" id="m-net-card">
+        <div class="metric-lbl">Net Lifetime Savings</div>
+        <div class="metric-val" id="m-net">—</div>
+        <div class="metric-sub" id="m-net-sub">interest saved minus closing costs</div>
+      </div>
+    </div>
+
+    <!-- Before vs. After comparison table -->
+    <div class="card">
+      <div class="card-title">Side-by-Side Comparison</div>
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Detail</th>
+            <th>Keep Current Loan</th>
+            <th>After Refinance</th>
+            <th>Difference</th>
+          </tr>
+        </thead>
+        <tbody id="compare-body"></tbody>
+      </table>
+    </div>
+
+    <!-- Balance chart -->
+    <div class="card">
+      <div class="card-title">Remaining Balance Over Time</div>
+      <div class="chart-wrap">
+        <canvas id="refi-chart"></canvas>
+      </div>
+      <div class="chart-legend">
+        <span><span class="legend-dot" style="background:#bbb; border-style:dashed;"></span>Current loan path</span>
+        <span><span class="legend-dot" style="background:var(--teal);"></span>After refinance</span>
+        <span id="breakeven-legend" style="display:none;">
+          <span class="legend-dot" style="background:#ff8f00; width:2px; height:18px; vertical-align:middle;"></span>Break-even point
+        </span>
+      </div>
+    </div>
+
+    <!-- Year-by-year schedule -->
+    <div class="card">
+      <div class="card-title">Year-by-Year Schedule</div>
+      <div class="table-actions">
+        <button class="btn-ghost" id="amort-toggle-btn" onclick="toggleAmort()">&#9654; Show full schedule</button>
+        <button class="btn-dl" onclick="downloadCSV()">&#8595; Download CSV</button>
+      </div>
+      <div class="amort-wrap" id="amort-wrap">
+        <table class="amort-table">
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th>Current: Balance</th>
+              <th>Current: Interest</th>
+              <th>New: Balance</th>
+              <th>New: Interest</th>
+              <th>Interest Saved</th>
+            </tr>
+          </thead>
+          <tbody id="amort-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="disclaimer">
+      * Results are estimates for informational and educational purposes only. Actual refinance savings depend on your
+      lender's rate lock, loan terms, and total closing costs. Break-even calculations assume you keep the loan for its
+      full term and do not account for the opportunity cost of upfront closing costs. Consult a licensed mortgage
+      professional before making refinancing decisions.
+    </p>
+
+  </div><!-- /results-wrap -->
+
+</div><!-- /yb-calc-wrap -->
+
+
+<script>
+  /* ── Helpers ── */
+  const $ = id => document.getElementById(id);
+  const fmtUSD = n => '$' + Math.abs(n).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  const fmtShort = n => {
+    if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'k';
+    return '$' + n.toFixed(0);
+  };
+  const sign = n => n >= 0 ? '+' : '−';
+
+  const MONTH_LONG  = ['January','February','March','April','May','June',
+                       'July','August','September','October','November','December'];
+  const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun',
+                       'Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  let _state = null;
+
+  /* ── Initialize date dropdowns ── */
+  (function initDates() {
+    const now  = new Date();
+    const curM = now.getMonth();
+    const curY = now.getFullYear();
+    const nxtM = (curM + 1) % 12;
+    const nxtY = curM === 11 ? curY + 1 : curY;
+
+    const mSel = $('r-start-month');
+    MONTH_LONG.forEach((name, i) => {
+      const o = document.createElement('option');
+      o.value = i + 1; o.textContent = name;
+      if (i === nxtM) o.selected = true;
+      mSel.appendChild(o);
+    });
+
+    const ySel = $('r-start-year');
+    for (let y = curY - 2; y <= curY + 10; y++) {
+      const o = document.createElement('option');
+      o.value = y; o.textContent = y;
+      if (y === nxtY) o.selected = true;
+      ySel.appendChild(o);
+    }
+  })();
+
+  /* ── Live current payment preview ── */
+  function refreshCurrentPayment() {
+    const balance = parseFloat($('r-cur-balance').value) || 0;
+    const rate    = parseFloat($('r-cur-rate').value)    || 0;
+    const years   = parseInt($('r-cur-years').value)     || 0;
+    const months  = parseInt($('r-cur-months').value)    || 0;
+    const termMo  = years * 12 + months;
+
+    if (balance > 0 && rate > 0 && termMo > 0) {
+      const pmt = calcPayment(balance, rate, termMo);
+      $('current-pmt-display').textContent = fmtUSD(pmt) + '/mo';
+      $('current-pmt-note').textContent    = 'principal & interest only';
+    } else {
+      $('current-pmt-display').textContent = '$—';
+      $('current-pmt-note').textContent    = 'fill in loan details above';
+    }
+  }
+
+  /* ── Closing cost method toggle ── */
+  function selectCostMethod(method) {
+    $('opt-upfront').classList.toggle('selected', method === 'upfront');
+    $('opt-rollin').classList.toggle('selected',  method === 'rollin');
+  }
+
+  /* ── Cash-out toggle ── */
+  function toggleCashout() {
+    $('cashout-field').classList.toggle('open', $('cashout-toggle').checked);
+  }
+
+  /* ── Toggle year-by-year table ── */
+  function toggleAmort() {
+    const wrap = $('amort-wrap'), btn = $('amort-toggle-btn');
+    const open = wrap.classList.toggle('open');
+    btn.textContent = open ? '▼ Hide schedule' : '▶ Show full schedule';
+  }
+
+  /* ── Date helpers ── */
+  function addMonths(startMonth, startYear, n) {
+    const d = new Date(startYear, startMonth - 1 + n, 1);
+    return { month: d.getMonth() + 1, year: d.getFullYear() };
+  }
+  function fmtMY(m, y) { return MONTH_SHORT[m - 1] + ' ' + y; }
+  function fmtMYLong(m, y) { return MONTH_LONG[m - 1] + ' ' + y; }
+
+  /* ── Core math ── */
+  function calcPayment(principal, annualRate, months) {
+    if (annualRate === 0) return principal / months;
+    const r = annualRate / 100 / 12;
+    return principal * r * Math.pow(1 + r, months) / (Math.pow(1 + r, months) - 1);
+  }
+
+  /*
+   * Build year-end snapshots: { year, endBalance, yearInterest }
+   * Runs for exactly `months` months, returning one row per year.
+   */
+  function buildYearlySchedule(principal, annualRate, months) {
+    const r   = annualRate / 100 / 12;
+    const pmt = calcPayment(principal, annualRate, months);
+    let bal   = principal;
+    let yInt  = 0;
+    const rows = [];
+    for (let m = 1; m <= months; m++) {
+      const interest = bal * r;
+      bal = Math.max(bal - (pmt - interest), 0);
+      yInt += interest;
+      if (m % 12 === 0 || m === months) {
+        rows.push({ year: Math.ceil(m / 12), endBalance: bal, yearInterest: yInt });
+        yInt = 0;
+      }
+    }
+    return rows;
+  }
+
+  /* ── CSV download ── */
+  function downloadCSV() {
+    if (!_state) return;
+    const { curRows, newRows } = _state;
+    const BOM  = '\uFEFF';
+    const maxLen = Math.max(curRows.length, newRows.length);
+    const hdrs = ['Year', 'Current: Balance', 'Current: Interest Paid',
+                  'New: Balance', 'New: Interest Paid', 'Interest Saved'];
+    const data = [];
+    for (let i = 0; i < maxLen; i++) {
+      const c = curRows[i], n = newRows[i];
+      data.push([
+        i + 1,
+        c ? c.endBalance.toFixed(2)    : 'Paid Off',
+        c ? c.yearInterest.toFixed(2)  : '—',
+        n ? n.endBalance.toFixed(2)    : 'Paid Off',
+        n ? n.yearInterest.toFixed(2)  : '—',
+        (c && n) ? (c.yearInterest - n.yearInterest).toFixed(2) : '—',
+      ]);
+    }
+    const csv = [hdrs, ...data]
+      .map(r => r.map(c => '"' + String(c ?? '').replace(/"/g, '""') + '"').join(','))
+      .join('\r\n');
+    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'refinance-comparison.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 100);
+  }
+
+  /* ── Main calculation ── */
+  function runCalc() {
+    const errEl = $('r-error');
+    errEl.style.display = 'none';
+    const fail = msg => { errEl.textContent = msg; errEl.style.display = 'block'; };
+
+    /* Parse inputs */
+    const curBalance  = parseFloat($('r-cur-balance').value);
+    const curRate     = parseFloat($('r-cur-rate').value);
+    const curYears    = parseInt($('r-cur-years').value)  || 0;
+    const curMos      = parseInt($('r-cur-months').value) || 0;
+    const newRate     = parseFloat($('r-new-rate').value);
+    const newTermYrs  = parseFloat($('r-new-term').value);
+    const closingCosts = parseFloat($('r-closing-costs').value) || 0;
+    const costMethod  = document.querySelector('input[name="cost-method"]:checked').value;
+    const cashOut     = $('cashout-toggle').checked ? (parseFloat($('r-cashout').value) || 0) : 0;
+    const startMonth  = parseInt($('r-start-month').value);
+    const startYear   = parseInt($('r-start-year').value);
+
+    /* Validate */
+    if (!curBalance || curBalance <= 0)         return fail('Please enter your current remaining balance.');
+    if (!curRate    || curRate    <= 0)         return fail('Please enter your current interest rate.');
+    if (curYears === 0 && curMos === 0)         return fail('Please enter your remaining loan term.');
+    if (!newRate    || newRate    <= 0)         return fail('Please enter the new interest rate.');
+    if (!newTermYrs || newTermYrs < 1)         return fail('Please enter the new loan term in years.');
+
+    const curTermMo  = curYears * 12 + curMos;
+    const newTermMo  = Math.round(newTermYrs * 12);
+
+    /*
+     * New loan amount:
+     *   - Start with current balance + cash-out
+     *   - Add closing costs if rolling them in
+     */
+    const newLoanBase   = curBalance + cashOut;
+    const newLoanAmount = costMethod === 'rollin'
+      ? newLoanBase + closingCosts
+      : newLoanBase;
+
+    /* Monthly payments */
+    const curPayment  = calcPayment(curBalance,   curRate,  curTermMo);
+    const newPayment  = calcPayment(newLoanAmount, newRate,  newTermMo);
+    const pmtDiff     = curPayment - newPayment; /* positive = savings */
+
+    /* Interest totals */
+    const curTotalInterest = curPayment * curTermMo - curBalance;
+    const newTotalInterest = newPayment * newTermMo - newLoanAmount;
+
+    /*
+     * Net savings calculation:
+     *   interest saved on the loan minus what you pay in closing costs
+     *   (closing costs are a sunk cost whether paid upfront or rolled in —
+     *    rolling in means you also pay interest on them, which is captured
+     *    in the higher newTotalInterest figure)
+     */
+    const interestSaved = curTotalInterest - newTotalInterest;
+    const netSavings    = interestSaved - closingCosts;
+
+    /*
+     * Break-even: months until monthly savings cover closing costs.
+     * Only meaningful when there are actual monthly savings AND upfront costs.
+     * For rolled-in costs, break-even is still calculable the same way —
+     * it reflects how long until the lower-rate benefit pays for the costs.
+     */
+    const upfrontCosts   = costMethod === 'upfront' ? closingCosts : 0;
+    const breakEvenMonths = (pmtDiff > 0 && closingCosts > 0)
+      ? Math.ceil(closingCosts / pmtDiff)
+      : null;
+
+    /* Build year-by-year schedules for table and chart */
+    const curRows = buildYearlySchedule(curBalance,    curRate,  curTermMo);
+    const newRows = buildYearlySchedule(newLoanAmount, newRate,  newTermMo);
+
+    /* Chart data: year-end balances for both loans */
+    const maxYears = Math.max(
+      Math.ceil(curTermMo / 12),
+      Math.ceil(newTermMo / 12)
+    );
+    const curChartPts = [{ year: 0, balance: curBalance }];
+    const newChartPts = [{ year: 0, balance: newLoanAmount }];
+    curRows.forEach(r => curChartPts.push({ year: r.year, balance: r.endBalance }));
+    newRows.forEach(r => newChartPts.push({ year: r.year, balance: r.endBalance }));
+
+    /* Save state */
+    _state = { curRows, newRows, curChartPts, newChartPts, maxYears,
+               curBalance, curRate, curTermMo, newLoanAmount, newRate, newTermMo,
+               curPayment, newPayment, curTotalInterest, newTotalInterest,
+               interestSaved, netSavings, closingCosts, breakEvenMonths, cashOut };
+
+    /* Payoff dates */
+    const curPayoff = addMonths(startMonth, startYear, curTermMo - 1);
+    const newPayoff = addMonths(startMonth, startYear, newTermMo - 1);
+
+    /* ── Term extension notice ── */
+    const termExtended = newTermMo > curTermMo;
+    const termReduced  = newTermMo < curTermMo;
+    if (termExtended) {
+      const extraMonths = newTermMo - curTermMo;
+      const extraYrs    = Math.floor(extraMonths / 12);
+      const extraMoRem  = extraMonths % 12;
+      const extraStr    = extraYrs > 0
+        ? `${extraYrs} yr${extraYrs > 1 ? 's' : ''}${extraMoRem > 0 ? ` ${extraMoRem} mo` : ''}`
+        : `${extraMonths} months`;
+      $('term-notice-text').innerHTML =
+        `<strong>Heads up — you're extending your payoff date.</strong>
+         Your current loan pays off <strong>${fmtMYLong(curPayoff.month, curPayoff.year)}</strong>.
+         The new ${newTermYrs}-year loan pays off <strong>${fmtMYLong(newPayoff.month, newPayoff.year)}</strong>
+         — that's <strong>${extraStr} longer</strong>.
+         Even if your monthly payment drops, a longer term means more total interest. Check the "Total Interest" row
+         below carefully before deciding.`;
+      $('term-notice').classList.add('show');
+    } else {
+      $('term-notice').classList.remove('show');
+    }
+
+    /* ── Situation banner ── */
+    const banner     = $('situation-banner');
+    const bannerIcon = $('situation-icon');
+    const bannerText = $('situation-text');
+
+    const noMonthlySavings = pmtDiff <= 0;
+    const rateGoingUp      = newRate >= curRate;
+    const longBreakEven    = breakEvenMonths !== null && breakEvenMonths > 60;
+
+    if (rateGoingUp) {
+      banner.className = 'situation-banner warning';
+      bannerIcon.textContent = '\u26A0';
+      bannerText.innerHTML =
+        `<strong>The new rate (${newRate}%) is not lower than your current rate (${curRate}%).</strong>
+         Refinancing here would increase your monthly payment
+         by <strong>${fmtUSD(Math.abs(pmtDiff))}/month</strong> and add to your total interest cost.
+         Refinancing typically only makes sense when the new rate is meaningfully lower.`;
+    } else if (noMonthlySavings) {
+      banner.className = 'situation-banner caution';
+      bannerIcon.textContent = '\u2139';
+      bannerText.innerHTML =
+        `Rolling in <strong>${fmtUSD(closingCosts)}</strong> in closing costs increases the loan balance enough
+         that your monthly payment ${newPayment > curPayment ? 'rises by <strong>' + fmtUSD(newPayment - curPayment) + '/month</strong>' : 'stays about the same'}.
+         Consider paying the closing costs upfront to unlock monthly savings, or negotiate lower fees.`;
+    } else if (longBreakEven) {
+      banner.className = 'situation-banner caution';
+      bannerIcon.textContent = '\u2139';
+      bannerText.innerHTML =
+        `You'll save <strong>${fmtUSD(pmtDiff)}/month</strong>, but it takes
+         <strong>${breakEvenMonths} months (${(breakEvenMonths / 12).toFixed(1)} years)</strong>
+         to recoup <strong>${fmtUSD(closingCosts)}</strong> in closing costs.
+         This refinance makes financial sense only if you plan to keep the home past ${fmtMYLong(addMonths(startMonth, startYear, breakEvenMonths).month, addMonths(startMonth, startYear, breakEvenMonths).year)}.`;
+    } else if (netSavings > 0 && !termExtended) {
+      banner.className = 'situation-banner good';
+      bannerIcon.textContent = '\u2714';
+      bannerText.innerHTML =
+        `This looks like a solid refinance. You save <strong>${fmtUSD(pmtDiff)}/month</strong>,
+         break even in <strong>${breakEvenMonths} month${breakEvenMonths !== 1 ? 's' : ''}</strong>,
+         and come out ahead by <strong>${fmtUSD(netSavings)}</strong> over the life of the loan
+         after accounting for closing costs.`;
+    } else {
+      banner.className = 'situation-banner good';
+      bannerIcon.textContent = '\u2714';
+      const be = breakEvenMonths !== null
+        ? ` Break-even: <strong>${breakEvenMonths} months</strong>.` : '';
+      bannerText.innerHTML =
+        `New payment: <strong>${fmtUSD(newPayment)}/month</strong> (saving <strong>${fmtUSD(pmtDiff)}/month</strong>).
+         Net lifetime savings after closing costs: <strong>${fmtUSD(netSavings)}</strong>.${be}
+         ${termExtended ? ' Review the term extension notice above.' : ''}`;
+    }
+
+    /* ── Metric cards ── */
+    $('m-new-pmt').textContent    = fmtUSD(newPayment);
+    $('m-new-pmt-sub').textContent = cashOut > 0
+      ? `/month (includes ${fmtUSD(cashOut)} cash-out)`
+      : '/month';
+
+    /* Monthly savings card */
+    const savCard = $('m-savings-card');
+    savCard.className = pmtDiff > 0 ? 'metric-card savings' : 'metric-card caution';
+    $('m-savings').textContent   = pmtDiff >= 0 ? fmtUSD(pmtDiff) : '+' + fmtUSD(Math.abs(pmtDiff));
+    $('m-savings-sub').textContent = pmtDiff >= 0
+      ? 'saved every month'
+      : 'more per month — payment increases';
+
+    /* Break-even card */
+    const beCard  = $('m-breakeven-card');
+    if (breakEvenMonths === null) {
+      beCard.className = 'metric-card caution';
+      $('m-breakeven').textContent = 'N/A';
+      $('m-breakeven-sub').textContent = closingCosts === 0 ? 'no closing costs' : 'no monthly savings to recoup costs';
+    } else if (breakEvenMonths <= 24) {
+      beCard.className = 'metric-card savings';
+      $('m-breakeven').textContent     = breakEvenMonths + ' mo';
+      $('m-breakeven-sub').textContent = `recoup ${fmtUSD(closingCosts)} by ${fmtMYLong(addMonths(startMonth, startYear, breakEvenMonths).month, addMonths(startMonth, startYear, breakEvenMonths).year)}`;
+    } else if (breakEvenMonths <= 60) {
+      beCard.className = 'metric-card';
+      $('m-breakeven').textContent     = breakEvenMonths + ' mo';
+      $('m-breakeven-sub').textContent = `recoup costs by ${fmtMYLong(addMonths(startMonth, startYear, breakEvenMonths).month, addMonths(startMonth, startYear, breakEvenMonths).year)}`;
+    } else {
+      beCard.className = 'metric-card caution';
+      $('m-breakeven').textContent     = Math.round(breakEvenMonths / 12 * 10) / 10 + ' yrs';
+      $('m-breakeven-sub').textContent = 'long payback period — plan to stay?';
+    }
+
+    /* Net savings card */
+    const netCard = $('m-net-card');
+    netCard.className = netSavings >= 0 ? 'metric-card savings' : 'metric-card caution';
+    $('m-net').textContent     = (netSavings >= 0 ? '' : '-') + fmtUSD(Math.abs(netSavings));
+    $('m-net-sub').textContent = netSavings >= 0
+      ? 'interest saved minus closing costs'
+      : 'costs exceed interest savings';
+
+    /* ── Comparison table ── */
+    const termStr = y => {
+      if (!y) return '—';
+      const yrs = Math.floor(y / 12), mos = y % 12;
+      return yrs > 0
+        ? yrs + ' yr' + (yrs !== 1 ? 's' : '') + (mos > 0 ? ' ' + mos + ' mo' : '')
+        : mos + ' months';
+    };
+
+    const pmtDiffSign  = pmtDiff >= 0;
+    const intSavedSign = interestSaved >= 0;
+    const netSign      = netSavings >= 0;
+
+    const rows = [
+      ['Monthly Payment (P&I)',
+        fmtUSD(curPayment),
+        fmtUSD(newPayment),
+        pmtDiffSign
+          ? `<span class="col-save">−${fmtUSD(pmtDiff)}</span>`
+          : `<span class="col-cost">+${fmtUSD(Math.abs(pmtDiff))}</span>`],
+      ['Loan Amount',
+        fmtUSD(curBalance),
+        fmtUSD(newLoanAmount),
+        cashOut > 0
+          ? `<span class="col-cost">+${fmtUSD(newLoanAmount - curBalance)}</span>`
+          : `<span class="col-save">same balance</span>`],
+      ['Remaining Term',
+        termStr(curTermMo),
+        termStr(newTermMo),
+        termExtended
+          ? `<span class="col-cost">+${termStr(newTermMo - curTermMo)} longer</span>`
+          : termReduced
+            ? `<span class="col-save">−${termStr(curTermMo - newTermMo)} shorter</span>`
+            : '<span style="color:var(--text-muted);">same</span>'],
+      ['Total Interest',
+        fmtUSD(curTotalInterest),
+        fmtUSD(newTotalInterest),
+        intSavedSign
+          ? `<span class="col-save">−${fmtUSD(interestSaved)}</span>`
+          : `<span class="col-cost">+${fmtUSD(Math.abs(interestSaved))}</span>`],
+      ['Closing Costs',
+        '—',
+        fmtUSD(closingCosts) + (costMethod === 'rollin' ? ' (rolled in)' : ' (upfront)'),
+        `<span class="col-cost">−${fmtUSD(closingCosts)}</span>`],
+      ['Payoff Date',
+        fmtMYLong(curPayoff.month, curPayoff.year),
+        fmtMYLong(newPayoff.month, newPayoff.year),
+        termExtended
+          ? `<span class="col-cost">${termStr(newTermMo - curTermMo)} later</span>`
+          : termReduced
+            ? `<span class="col-save">${termStr(curTermMo - newTermMo)} sooner</span>`
+            : '<span style="color:var(--text-muted);">same</span>'],
+      ['Net Lifetime Savings',
+        '—',
+        '—',
+        netSign
+          ? `<span class="col-save">${fmtUSD(netSavings)} ahead</span>`
+          : `<span class="col-cost">${fmtUSD(Math.abs(netSavings))} behind</span>`],
+    ];
+
+    $('compare-body').innerHTML = rows.map(r =>
+      `<tr><td>${r[0]}</td><td>${r[1]}</td><td class="col-new">${r[2]}</td><td>${r[3]}</td></tr>`
+    ).join('');
+
+    /* ── Year-by-year table ── */
+    const maxRows = Math.max(curRows.length, newRows.length);
+    $('amort-body').innerHTML = Array.from({ length: maxRows }, (_, i) => {
+      const c    = curRows[i];
+      const n    = newRows[i];
+      const intS = (c && n) ? c.yearInterest - n.yearInterest : null;
+      return `<tr>
+        <td>Year ${i + 1}</td>
+        <td>${c ? fmtUSD(c.endBalance)   : '<span class="col-paid">Paid Off</span>'}</td>
+        <td>${c ? fmtUSD(c.yearInterest) : '—'}</td>
+        <td class="col-new-bal">${n ? fmtUSD(n.endBalance)   : '<span class="col-paid">Paid Off</span>'}</td>
+        <td>${n ? fmtUSD(n.yearInterest) : '—'}</td>
+        <td class="${intS !== null && intS >= 0 ? 'col-int-save' : ''}">${intS !== null ? (intS >= 0 ? '−' : '+') + fmtUSD(Math.abs(intS)) : '—'}</td>
+      </tr>`;
+    }).join('');
+
+    /* ── Show results ── */
+    $('results-wrap').classList.add('visible');
+    $('results-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    setTimeout(() => drawChart(curChartPts, newChartPts, maxYears, breakEvenMonths, startMonth, startYear), 60);
+  }
+
+  /* ── Balance comparison chart ── */
+  /*
+   * Two-line chart:
+   *   - Gray dashed: current loan balance (declines over curTermMo)
+   *   - Teal solid: new loan balance (declines over newTermMo)
+   *   - Vertical amber dashed line at break-even month (if exists and < chart width)
+   *
+   * The visual shows whether the new balance diverges early (great refi) or
+   * the lines cross back (cash-out or term extension scenarios).
+   */
+  function drawChart(curPts, newPts, maxYears, breakEvenMonths, startMonth, startYear) {
+    const canvas = $('refi-chart');
+    const ctx    = canvas.getContext('2d');
+    const dpr    = window.devicePixelRatio || 1;
+    const cW     = canvas.parentElement.clientWidth;
+    const cH     = 230;
+
+    canvas.width  = cW * dpr; canvas.height = cH * dpr;
+    canvas.style.width  = cW + 'px';
+    canvas.style.height = cH + 'px';
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, cW, cH);
+
+    const pad  = { top: 16, right: 16, bottom: 36, left: 76 };
+    const w    = cW - pad.left - pad.right;
+    const h    = cH - pad.top  - pad.bottom;
+    const maxY = Math.max(curPts[0].balance, newPts[0].balance);
+
+    const xAt  = yr  => pad.left + (yr / maxYears) * w;
+    const yAt  = val => pad.top  + (1 - Math.min(val, maxY) / maxY) * h;
+
+    /* Grid lines + Y labels */
+    ctx.strokeStyle = '#e8eaed'; ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const val = maxY * i / 4;
+      const y   = yAt(val);
+      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + w, y); ctx.stroke();
+      ctx.fillStyle = '#999'; ctx.font = '11px -apple-system, sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText(fmtShort(val), pad.left - 6, y + 4);
+    }
+
+    /* X labels */
+    const xStep = maxYears <= 10 ? 2 : maxYears <= 20 ? 5 : 5;
+    ctx.fillStyle = '#999'; ctx.font = '11px -apple-system, sans-serif'; ctx.textAlign = 'center';
+    for (let yr = 0; yr <= maxYears; yr += xStep) {
+      ctx.fillText('Yr ' + yr, xAt(yr), cH - pad.bottom + 16);
+    }
+
+    /* ── Draw current loan line (gray dashed) ── */
+    ctx.beginPath();
+    ctx.moveTo(xAt(curPts[0].year), yAt(curPts[0].balance));
+    for (let i = 1; i < curPts.length; i++) ctx.lineTo(xAt(curPts[i].year), yAt(curPts[i].balance));
+    ctx.strokeStyle = '#c0c0c0';
+    ctx.lineWidth   = 2.5;
+    ctx.setLineDash([7, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* ── Draw new loan line (teal solid) ── */
+    ctx.beginPath();
+    ctx.moveTo(xAt(newPts[0].year), yAt(newPts[0].balance));
+    for (let i = 1; i < newPts.length; i++) ctx.lineTo(xAt(newPts[i].year), yAt(newPts[i].balance));
+    ctx.strokeStyle = '#0B7D67';
+    ctx.lineWidth   = 2.5;
+    ctx.stroke();
+
+    /* ── Break-even vertical marker ── */
+    const beYr = breakEvenMonths !== null ? breakEvenMonths / 12 : null;
+    if (beYr !== null && beYr <= maxYears) {
+      const bx = xAt(beYr);
+      ctx.beginPath();
+      ctx.moveTo(bx, pad.top);
+      ctx.lineTo(bx, pad.top + h);
+      ctx.strokeStyle = '#ff8f00';
+      ctx.lineWidth   = 1.5;
+      ctx.setLineDash([5, 3]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      /* Label above line */
+      const beLabelDate = addMonths(startMonth, startYear, breakEvenMonths);
+      const beLabel     = 'Break-even: ' + fmtMY(beLabelDate.month, beLabelDate.year);
+      ctx.fillStyle  = '#ff8f00';
+      ctx.font       = 'bold 10px -apple-system, sans-serif';
+      ctx.textAlign  = bx > cW * 0.6 ? 'right' : 'left';
+      ctx.fillText(beLabel, bx + (bx > cW * 0.6 ? -6 : 6), pad.top + 12);
+
+      $('breakeven-legend').style.display = '';
+    } else {
+      $('breakeven-legend').style.display = 'none';
+    }
+
+    /* Label the two lines at their end points */
+    const curLast = curPts[curPts.length - 1];
+    const newLast = newPts[newPts.length - 1];
+    ctx.font = 'bold 10px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+
+    ctx.fillStyle = '#aaa';
+    ctx.fillText('Current: paid off Yr ' + curLast.year,
+                 xAt(curLast.year) - 4, yAt(curLast.balance) - 6);
+
+    ctx.fillStyle = '#0B7D67';
+    ctx.fillText('New: paid off Yr ' + newLast.year,
+                 xAt(newLast.year) - 4, yAt(newLast.balance) + 14);
+  }
+
+  /* ── Redraw on resize ── */
+  let _rt;
+  window.addEventListener('resize', () => {
+    clearTimeout(_rt);
+    _rt = setTimeout(() => {
+      if (!_state || !$('results-wrap').classList.contains('visible')) return;
+      const { curChartPts, newChartPts, maxYears, breakEvenMonths } = _state;
+      const sm = parseInt($('r-start-month').value);
+      const sy = parseInt($('r-start-year').value);
+      drawChart(curChartPts, newChartPts, maxYears, breakEvenMonths, sm, sy);
+    }, 200);
+  });
+
+  /* ── Enter key triggers calculation ── */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.closest('.yb-calc-wrap')) runCalc();
+  });
+</script>
+
+</body>
+</html>
