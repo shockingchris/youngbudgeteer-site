@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FIRE Number Calculator — Young Budgeteer</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #efefef;
+      color: #222;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #0B7D67;
+      color: white;
+      padding: 36px 24px 28px;
+      text-align: center;
+    }
+
+    header h1 { font-size: 1.8rem; font-weight: 700; }
+    header p  { margin-top: 6px; opacity: 0.88; font-size: 1rem; }
+
+    .calc-wrapper {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 28px 16px 60px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 24px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #0B7D67;
+      font-weight: 700;
+      margin-bottom: 18px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e8f5f2;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 580px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+
+    .field { margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .input-wrap { position: relative; }
+
+    .input-wrap .pre,
+    .input-wrap .suf {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #999;
+      font-size: 0.88rem;
+      pointer-events: none;
+    }
+
+    .input-wrap .pre { left: 10px; }
+    .input-wrap .suf { right: 10px; }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1.5px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      color: #222;
+      transition: border-color 0.15s;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    input[type="number"]:focus { outline: none; border-color: #0B7D67; }
+
+    .has-pre input { padding-left: 24px; }
+    .has-suf input { padding-right: 32px; }
+
+    .hint { font-size: 0.75rem; color: #aaa; margin-top: 3px; }
+
+    /* Withdrawal rate widget */
+    .wr-widget {
+      background: #f0faf7;
+      border: 2px solid #0B7D67;
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+
+    .wr-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+
+    .wr-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #0B7D67;
+    }
+
+    .wr-display {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .wr-rate {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #0B7D67;
+      line-height: 1;
+    }
+
+    .wr-multiplier {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #555;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      margin: 10px 0 6px;
+      -webkit-appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(to right, #0B7D67 0%, #0B7D67 40%, #ddd 40%);
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #0B7D67;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #0B7D67;
+      border: none;
+      cursor: pointer;
+    }
+
+    .wr-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: #aaa;
+      padding: 0 2px;
+    }
+
+    .wr-description {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      color: #555;
+      line-height: 1.5;
+      padding-top: 10px;
+      border-top: 1px solid #c8e8e2;
+    }
+
+    /* Button */
+    .calc-btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: #0B7D67;
+      color: white;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+      margin-bottom: 28px;
+    }
+
+    .calc-btn:hover { background: #096b57; }
+
+    .hidden { display: none; }
+
+    /* Progress bar */
+    .progress-section {
+      margin-bottom: 20px;
+      background: white;
+      border-radius: 10px;
+      padding: 22px 24px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+
+    .progress-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #555;
+    }
+
+    .progress-pct {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #0B7D67;
+    }
+
+    .progress-bar-track {
+      width: 100%;
+      height: 14px;
+      background: #e8f5f2;
+      border-radius: 7px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #0B7D67, #14a088);
+      border-radius: 7px;
+      transition: width 0.6s ease;
+    }
+
+    .progress-sub {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: #aaa;
+    }
+
+    /* Metric cards */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .metric {
+      background: white;
+      border-radius: 10px;
+      padding: 18px 14px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      text-align: center;
+    }
+
+    .metric .mlabel {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #999;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .metric .mvalue {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #0B7D67;
+      line-height: 1.1;
+    }
+
+    .metric .msub { font-size: 0.72rem; color: #bbb; margin-top: 4px; }
+    .metric.already .mvalue { color: #0B7D67; }
+
+    /* Chart */
+    .chart-card {
+      background: white;
+      border-radius: 10px;
+      padding: 24px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      margin-bottom: 20px;
+    }
+
+    .chart-card h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #0B7D67;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .chart-wrap { position: relative; height: 280px; }
+
+    /* Comparison table */
+    .table-card {
+      background: white;
+      border-radius: 10px;
+      padding: 24px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      overflow-x: auto;
+    }
+
+    .table-card h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #0B7D67;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .table-card p {
+      font-size: 0.8rem;
+      color: #999;
+      margin-bottom: 16px;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+
+    thead tr { background: #0B7D67; color: white; }
+    thead th {
+      padding: 10px 14px;
+      text-align: right;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    thead th:first-child { text-align: left; }
+
+    tbody tr:nth-child(even) { background: #f7faf9; }
+    tbody tr.active-row { background: #e8f5f2 !important; }
+
+    tbody td {
+      padding: 10px 14px;
+      text-align: right;
+      border-bottom: 1px solid #eee;
+      white-space: nowrap;
+    }
+    tbody td:first-child { text-align: left; }
+
+    .tag {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .tag-selected { background: #0B7D67; color: white; }
+    .tag-study    { background: #e8f5f2; color: #0B7D67; border: 1px solid #0B7D67; }
+
+    .already-banner {
+      background: #e8f5f2;
+      border: 2px solid #0B7D67;
+      border-radius: 10px;
+      padding: 18px 22px;
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #0B7D67;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>FIRE Number Calculator</h1>
+  <p>How much do you need to retire early? Find your number and your timeline.</p>
+</header>
+
+<div class="calc-wrapper">
+
+  <!-- Withdrawal Rate Widget (most important input — shown first) -->
+  <div class="wr-widget">
+    <div class="wr-top">
+      <span class="wr-label">Safe Withdrawal Rate</span>
+      <div class="wr-display">
+        <span class="wr-rate" id="wrDisplay">4.0%</span>
+        <span class="wr-multiplier" id="wrMultiplier">= save 25x expenses</span>
+      </div>
+    </div>
+    <input type="range" id="withdrawalRate" min="2" max="8" step="0.1" value="4"
+           oninput="updateWRDisplay()">
+    <div class="wr-ticks">
+      <span>2%</span><span>3%</span><span>4%</span><span>5%</span><span>6%</span><span>7%</span><span>8%</span>
+    </div>
+    <div class="wr-description" id="wrDescription"></div>
+  </div>
+
+  <!-- Inputs -->
+  <div class="card">
+    <h2>Your Numbers</h2>
+    <div class="two-col">
+      <div class="field">
+        <label for="annualExpenses">Annual Expenses in Retirement</label>
+        <div class="input-wrap has-pre">
+          <span class="pre">$</span>
+          <input type="number" id="annualExpenses" value="50000" min="0">
+        </div>
+        <div class="hint">What you plan to spend each year</div>
+      </div>
+      <div class="field">
+        <label for="currentSavings">Current Invested Assets</label>
+        <div class="input-wrap has-pre">
+          <span class="pre">$</span>
+          <input type="number" id="currentSavings" value="50000" min="0">
+        </div>
+        <div class="hint">401k, IRA, brokerage, etc.</div>
+      </div>
+      <div class="field">
+        <label for="monthlyContrib">Monthly Savings Contribution</label>
+        <div class="input-wrap has-pre">
+          <span class="pre">$</span>
+          <input type="number" id="monthlyContrib" value="1500" min="0">
+        </div>
+        <div class="hint">How much you invest each month</div>
+      </div>
+      <div class="field">
+        <label for="currentAge">Current Age</label>
+        <input type="number" id="currentAge" value="30" min="18" max="80">
+      </div>
+      <div class="field">
+        <label for="annualReturn">Expected Annual Return</label>
+        <div class="input-wrap has-suf">
+          <input type="number" id="annualReturn" value="7" min="0" max="20" step="0.1">
+          <span class="suf">%</span>
+        </div>
+        <div class="hint">Real (inflation-adjusted). Historical avg ~7% for stocks.</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="calc-btn" onclick="calculate()">Calculate My FIRE Number</button>
+
+  <!-- Results -->
+  <div id="results" class="hidden">
+
+    <div id="alreadyBanner" class="already-banner hidden">
+      You've already reached your FIRE number! Based on your inputs, you could retire today.
+    </div>
+
+    <div class="progress-section">
+      <div class="progress-header">
+        <span class="progress-title">Progress to FIRE</span>
+        <span class="progress-pct" id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+      </div>
+      <div class="progress-sub">
+        <span id="progressCurrent"></span>
+        <span id="progressTarget"></span>
+      </div>
+    </div>
+
+    <div class="metrics-grid" id="metricsGrid"></div>
+
+    <div class="chart-card">
+      <h3>Portfolio Growth to FIRE</h3>
+      <div class="chart-wrap">
+        <canvas id="fireChart"></canvas>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <h3>Withdrawal Rate Comparison</h3>
+      <p>Same monthly savings, same return — how much the withdrawal rate changes your target and timeline.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Withdrawal Rate</th>
+            <th>Savings Multiple</th>
+            <th>FIRE Number</th>
+            <th>Years to FIRE</th>
+            <th>Retirement Age</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  let chartInstance = null;
+
+  const WR_DESCRIPTIONS = {
+    low:  'Very conservative. Designed to last 50+ years with extremely low failure risk. Common choice for those retiring in their 30s or early 40s.',
+    mid:  'The "4% Rule" from the Trinity Study (1998) — historically survived 30-year retirements in nearly all market conditions. Standard FIRE benchmark.',
+    high: 'More aggressive. Assumes flexibility to cut spending or earn some income in down years. May not be appropriate for a very long retirement horizon.'
+  };
+
+  function $ (id) { return document.getElementById(id); }
+  function val(id) { return parseFloat($(id).value) || 0; }
+
+  function fmt(n) {
+    if (n >= 1000000) return '$' + (n / 1000000).toFixed(2) + 'M';
+    return '$' + Math.round(n).toLocaleString();
+  }
+
+  function updateWRDisplay() {
+    const wr  = parseFloat($('withdrawalRate').value);
+    const pct = wr.toFixed(1) + '%';
+    const mult = (100 / wr).toFixed(1);
+
+    $('wrDisplay').textContent = pct;
+    $('wrMultiplier').textContent = '= save ' + mult + 'x expenses';
+
+    let desc, pctRange;
+    if (wr <= 3.0) {
+      desc = WR_DESCRIPTIONS.low;
+    } else if (wr <= 4.5) {
+      desc = (wr === 4.0 || (wr >= 3.9 && wr <= 4.1))
+        ? WR_DESCRIPTIONS.mid
+        : WR_DESCRIPTIONS.low;
+      if (wr > 3.0 && wr < 3.9) desc = WR_DESCRIPTIONS.low;
+      if (wr >= 3.9 && wr <= 4.1) desc = WR_DESCRIPTIONS.mid;
+      if (wr > 4.1 && wr <= 4.5) desc = WR_DESCRIPTIONS.mid;
+    } else {
+      desc = WR_DESCRIPTIONS.high;
+    }
+
+    $('wrDescription').textContent = desc;
+
+    // Update slider gradient
+    const pctPos = ((wr - 2) / (8 - 2)) * 100;
+    $('withdrawalRate').style.background =
+      `linear-gradient(to right, #0B7D67 0%, #0B7D67 ${pctPos}%, #ddd ${pctPos}%)`;
+  }
+
+  function yearsToReach(target, currentSavings, monthlyContrib, monthlyReturn) {
+    if (currentSavings >= target) return 0;
+    let p = currentSavings;
+    for (let m = 1; m <= 1200; m++) {
+      p = p * (1 + monthlyReturn) + monthlyContrib;
+      if (p >= target) return m / 12;
+    }
+    return null; // won't reach in 100 years
+  }
+
+  function calculate() {
+    const annualExpenses = val('annualExpenses');
+    const currentSavings = val('currentSavings');
+    const monthlyContrib = val('monthlyContrib');
+    const currentAge     = val('currentAge');
+    const annualReturn   = val('annualReturn') / 100;
+    const withdrawalRate = parseFloat($('withdrawalRate').value) / 100;
+    const monthlyReturn  = annualReturn / 12;
+
+    const fireNumber     = annualExpenses / withdrawalRate;
+    const progress       = Math.min(100, (currentSavings / fireNumber) * 100);
+    const alreadyFIRE    = currentSavings >= fireNumber;
+
+    let yearsNeeded = 0;
+    let retirementAge = currentAge;
+
+    if (!alreadyFIRE) {
+      const y = yearsToReach(fireNumber, currentSavings, monthlyContrib, monthlyReturn);
+      yearsNeeded = y;
+      retirementAge = y !== null ? currentAge + y : null;
+    }
+
+    // Chart data: portfolio growth year by year
+    const chartYears = alreadyFIRE ? 10
+      : (yearsNeeded !== null ? Math.ceil(yearsNeeded) + 8 : 50);
+    const labels     = ['Now'];
+    const portData   = [Math.round(currentSavings)];
+    let p = currentSavings;
+    let fireReachedYear = alreadyFIRE ? 0 : null;
+    const monthlyWithdraw = annualExpenses / 12;
+
+    for (let y = 1; y <= chartYears; y++) {
+      const isPostFire = fireReachedYear !== null && y > fireReachedYear;
+      for (let m = 0; m < 12; m++) {
+        if (isPostFire) {
+          p = p * (1 + monthlyReturn) - monthlyWithdraw;
+        } else {
+          p = p * (1 + monthlyReturn) + monthlyContrib;
+          if (p >= fireNumber && fireReachedYear === null) {
+            fireReachedYear = y;
+          }
+        }
+      }
+      labels.push('Yr ' + y);
+      portData.push(Math.round(Math.max(0, p)));
+    }
+
+    // Comparison table
+    const compareRates = [2.5, 3, 3.5, 4, 4.5, 5, 5.5];
+    const comparison = compareRates.map(r => {
+      const fn   = annualExpenses / (r / 100);
+      const yrs  = yearsToReach(fn, currentSavings, monthlyContrib, monthlyReturn);
+      const age  = yrs !== null ? currentAge + yrs : null;
+      return { rate: r, fn, yrs, age };
+    });
+
+    render({
+      fireNumber, progress, alreadyFIRE,
+      yearsNeeded, retirementAge,
+      annualExpenses, currentSavings, monthlyContrib,
+      withdrawalRate,
+      labels, portData, fireNumber,
+      comparison, currentAge
+    });
+  }
+
+  function render(d) {
+    $('results').classList.remove('hidden');
+
+    // Already FIRE banner
+    if (d.alreadyFIRE) {
+      $('alreadyBanner').classList.remove('hidden');
+    } else {
+      $('alreadyBanner').classList.add('hidden');
+    }
+
+    // Progress bar
+    const pct = Math.round(d.progress);
+    $('progressPct').textContent   = pct + '%';
+    $('progressFill').style.width  = pct + '%';
+    $('progressCurrent').textContent = 'Current: ' + fmt(d.currentSavings);
+    $('progressTarget').textContent  = 'Target: ' + fmt(d.fireNumber);
+
+    // Metric cards
+    const timeText = d.alreadyFIRE
+      ? 'Already there!'
+      : d.yearsNeeded === null
+        ? '>100 years'
+        : fmtYears(d.yearsNeeded);
+
+    const ageText = d.retirementAge === null
+      ? 'N/A'
+      : d.alreadyFIRE
+        ? d.currentAge + ' (now)'
+        : Math.round(d.retirementAge);
+
+    const stillNeeded = Math.max(0, d.fireNumber - d.currentSavings);
+    const monthlyPassive = d.annualExpenses / 12;
+
+    $('metricsGrid').innerHTML = `
+      <div class="metric">
+        <div class="mlabel">FIRE Number</div>
+        <div class="mvalue">${fmt(d.fireNumber)}</div>
+        <div class="msub">At ${(d.withdrawalRate * 100).toFixed(1)}% withdrawal rate</div>
+      </div>
+      <div class="metric">
+        <div class="mlabel">Still Needed</div>
+        <div class="mvalue">${fmt(stillNeeded)}</div>
+        <div class="msub">To reach your target</div>
+      </div>
+      <div class="metric">
+        <div class="mlabel">Years to FIRE</div>
+        <div class="mvalue">${timeText}</div>
+        <div class="msub">At current savings rate</div>
+      </div>
+      <div class="metric">
+        <div class="mlabel">Retirement Age</div>
+        <div class="mvalue">${ageText}</div>
+        <div class="msub">Projected</div>
+      </div>
+      <div class="metric">
+        <div class="mlabel">Monthly Passive Income</div>
+        <div class="mvalue">${fmt(monthlyPassive)}</div>
+        <div class="msub">From portfolio at FIRE</div>
+      </div>
+    `;
+
+    // Chart
+    if (chartInstance) chartInstance.destroy();
+
+    const fireLineData = d.labels.map(() => Math.round(d.fireNumber));
+
+    chartInstance = new Chart($('fireChart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: d.labels,
+        datasets: [
+          {
+            label: 'Portfolio Value',
+            data: d.portData,
+            borderColor: '#0B7D67',
+            backgroundColor: 'rgba(11,125,103,0.08)',
+            borderWidth: 2.5,
+            pointRadius: 2,
+            tension: 0.35,
+            fill: true
+          },
+          {
+            label: 'FIRE Number',
+            data: fireLineData,
+            borderColor: '#e07b39',
+            borderWidth: 2,
+            borderDash: [6, 4],
+            pointRadius: 0,
+            fill: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top' },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString()}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            ticks: {
+              callback: v => {
+                if (v >= 1000000) return '$' + (v / 1000000).toFixed(1) + 'M';
+                if (v >= 1000)    return '$' + (v / 1000).toFixed(0) + 'k';
+                return '$' + v;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Comparison table
+    const selectedRate = (d.withdrawalRate * 100).toFixed(1);
+    $('tableBody').innerHTML = d.comparison.map(row => {
+      const isSelected = Math.abs(row.rate - d.withdrawalRate * 100) < 0.05;
+      const trClass    = isSelected ? 'active-row' : '';
+      const rateLbl    = row.rate.toFixed(1) + '%';
+      const mult       = (100 / row.rate).toFixed(1) + 'x';
+      const fnLbl      = fmt(row.fn);
+      const yrsLbl     = row.yrs === null ? '100+ yrs' : fmtYears(row.yrs);
+      const ageLbl     = row.age === null ? 'N/A' : Math.round(row.age);
+
+      let tags = '';
+      if (isSelected)    tags += '<span class="tag tag-selected">Your pick</span>';
+      if (row.rate === 4) tags += '<span class="tag tag-study">Trinity Study</span>';
+
+      return `<tr class="${trClass}">
+        <td>${rateLbl}${tags}</td>
+        <td>${mult}</td>
+        <td>${fnLbl}</td>
+        <td>${yrsLbl}</td>
+        <td>${ageLbl}</td>
+      </tr>`;
+    }).join('');
+
+    $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function fmtYears(y) {
+    if (y < 1) return Math.round(y * 12) + ' mo';
+    const yrs = Math.floor(y);
+    const mos = Math.round((y - yrs) * 12);
+    if (mos === 0) return yrs + ' yr';
+    return yrs + ' yr ' + mos + ' mo';
+  }
+
+  // Init slider display
+  updateWRDisplay();
+</script>
+</body>
+</html>
