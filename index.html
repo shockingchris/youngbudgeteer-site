@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Financial Calculators — Young Budgeteer</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #efefef;
+      color: #222;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #0B7D67;
+      color: white;
+      padding: 40px 24px 32px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 1.9rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      margin-top: 8px;
+      font-size: 1rem;
+      opacity: 0.88;
+    }
+
+    header a {
+      color: #a8f0e0;
+      text-decoration: none;
+    }
+
+    header a:hover {
+      text-decoration: underline;
+    }
+
+    main {
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    h2 {
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #555;
+      margin-bottom: 16px;
+    }
+
+    .calculator-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .calc-card {
+      background: white;
+      border-radius: 8px;
+      border-left: 5px solid #0B7D67;
+      padding: 18px 20px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      transition: box-shadow 0.15s, transform 0.15s;
+    }
+
+    .calc-card:hover {
+      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+      transform: translateY(-1px);
+    }
+
+    .calc-info h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #111;
+    }
+
+    .calc-info p {
+      font-size: 0.875rem;
+      color: #666;
+      margin-top: 3px;
+    }
+
+    .arrow {
+      font-size: 1.2rem;
+      color: #0B7D67;
+      flex-shrink: 0;
+      margin-left: 16px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 40px 20px 32px;
+      font-size: 0.85rem;
+      color: #888;
+    }
+
+    footer a {
+      color: #0B7D67;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Financial Calculators</h1>
+    <p>Free tools from <a href="https://youngbudgeteer.wordpress.com" target="_blank">Young Budgeteer</a></p>
+  </header>
+
+  <main>
+    <h2>Available Calculators</h2>
+
+    <div class="calculator-list">
+
+      <a class="calc-card" href="mortgage-calculator.html">
+        <div class="calc-info">
+          <h3>Mortgage Calculator</h3>
+          <p>Estimate your monthly payment, total interest, and full amortization schedule.</p>
+        </div>
+        <span class="arrow">&#8250;</span>
+      </a>
+
+      <a class="calc-card" href="mortgage-reamortization-calculator.html">
+        <div class="calc-info">
+          <h3>Mortgage Reamortization Calculator</h3>
+          <p>See how a lump-sum payment reduces your balance and shortens your loan.</p>
+        </div>
+        <span class="arrow">&#8250;</span>
+      </a>
+
+      <a class="calc-card" href="mortgage-refinance-calculator.html">
+        <div class="calc-info">
+          <h3>Mortgage Refinance Calculator</h3>
+          <p>Compare your current loan to a refinance offer and find your break-even point.</p>
+        </div>
+        <span class="arrow">&#8250;</span>
+      </a>
+
+      <a class="calc-card" href="compound-interest-calculator.html">
+        <div class="calc-info">
+          <h3>Compound Interest Calculator</h3>
+          <p>Watch your money grow over time with regular contributions and compounding.</p>
+        </div>
+        <span class="arrow">&#8250;</span>
+      </a>
+
+      <a class="calc-card" href="auto-student-loan-calculator.html">
+        <div class="calc-info">
+          <h3>Auto &amp; Student Loan Calculator</h3>
+          <p>Calculate payments, total interest, and payoff schedules for any installment loan.</p>
+        </div>
+        <span class="arrow">&#8250;</span>
+      </a>
+
+    </div>
+  </main>
+
+  <footer>
+    <p>More calculators coming soon &mdash; <a href="https://youngbudgeteer.wordpress.com" target="_blank">visit the blog</a> for personal finance tips, book reviews, and more.</p>
+  </footer>
+
+</body>
+</html>
