@@ -1,0 +1,247 @@
+Young Budgeteer — Growth & Monetization Plan
+=============================================
+Last updated: March 2026 (self-hosted migration complete)
+
+
+===== WHERE YOU ARE NOW =====
+
+- Site: youngbudgeteer.com (self-hosted, migrated March 2026)
+- Stack: Ubuntu Server + Docker + Nginx Proxy Manager + Cloudflare
+- Server: Home PC (16GB RAM, SSD, powerline ethernet)
+- Active since 2019, still publishing 2025
+- Niche: Personal finance, book reviews, restaurant reviews, general lifestyle
+- Biggest gap right now: No email newsletter signup, calculator iframes not yet embedded
+
+
+===== MIGRATION ROADMAP =====
+
+PHASE 1 — NOW (Free Plan, Stay Put)
+- Keep publishing content on WordPress.com free
+- Build calculators and assets locally (what we're doing)
+- Prepare everything so migration is smooth when ready
+
+PHASE 2 — SOON (Move to Paid Hosting)
+Option A: WordPress.com Business Plan (~$25/month)
+  - Easiest transition — no migration needed
+  - Unlocks plugins and custom code (embed calculators immediately)
+  - Best choice if you want low hassle
+
+Option B: Self-Hosted on SiteGround (~$3-8/month)
+  - More control, cheaper long-term
+  - Requires migrating your site (doable, not hard)
+  - WARNING: SiteGround deleted your entire site last time you cancelled
+    → ALWAYS set up UpdraftPlus → Google Drive BEFORE doing anything else
+    → NEVER cancel without downloading a full backup first
+
+PHASE 3 — WHEN READY (Self-Host on Your Own PC)
+- Stack: Ubuntu Server + Docker (WordPress + MariaDB + Nginx) + Cloudflare
+- You already have a spare PC that can do this
+- Web server (ports 80/443) and Minecraft server (port 25565) do NOT conflict
+- Cloudflare handles your domain DNS + free SSL + DDoS protection
+
+
+===== BACKUP STRATEGY (DO THIS FIRST ON ANY NEW HOST) =====
+
+1. UpdraftPlus plugin → backs up files + database → sends to Google Drive automatically
+2. GitHub repo for all custom code (calculators, etc.)
+3. Annual WordPress XML export as a third safety net
+
+
+===== MONETIZATION PLAN (IN ORDER) =====
+
+STEP 1 — START NOW: Affiliate Marketing
+- You already write book reviews → sign up for Amazon Associates
+  - Add affiliate links to every book you review
+- Personal finance niche affiliate programs:
+  - M1 Finance, Betterment, Wealthfront (investing platforms)
+  - YNAB (budgeting app) — great fit for your audience
+  - Credit Karma, NerdWallet have affiliate programs too
+- How it works: you get a small % when readers click your link and buy/sign up
+- No minimum traffic required — start immediately
+- Disclosure required: add "This post contains affiliate links" to relevant posts
+
+STEP 2 — ADD EARLY: Email Newsletter
+- Platform: MailerLite (free up to 1,000 subscribers)
+- This is currently your biggest missing piece
+- What to do:
+  - Sign up for MailerLite (free)
+  - Create a simple signup form
+  - Add it to your sidebar, footer, and end of posts
+  - Send a newsletter when you publish new posts
+- Why it matters: email list = audience YOU own, not dependent on Google or social
+
+STEP 3 — WHEN TRAFFIC BUILDS: Display Ads
+- Start with: Google AdSense (no minimum traffic)
+  - Apply once your site is on a paid plan (free plan blocks ads)
+  - Pays very little at low traffic but it's passive income
+- Upgrade to: Mediavine (requires 50,000 sessions/month)
+  - Much higher RPM (revenue per thousand visitors)
+  - This is the goal — it's where personal finance blogs make real money
+- Do NOT bother with display ads until you have consistent traffic
+
+STEP 4 — LATER: Higher-Tier Monetization
+- Memberships / paid content (Patreon or WordPress membership plugins)
+- Direct brand sponsorships (companies pay you to write about their product)
+- Sponsored posts / reviews
+- These require a real audience first — focus on building traffic before pursuing these
+
+
+===== CONTENT & TRAFFIC GROWTH =====
+
+CALCULATORS (Tools = SEO Traffic Magnets)
+
+All files live at: d:\ClaudeTesting\BlogWebsite\
+All hosted at:    https://shockingchris.github.io/youngbudgeteer-site/
+Index page:       index.html (sectioned into Mortgage & Home / Installment Loans / Retirement & Savings)
+
+--- MORTGAGE & HOME ---
+  ✅ Mortgage Calculator                  → mortgage-calculator.html
+  ✅ Mortgage Reamortization Calculator   → mortgage-reamortization-calculator.html
+  ✅ Mortgage Refinance Calculator        → mortgage-refinance-calculator.html
+  ✅ Rent vs. Buy Calculator              → rent-vs-buy-calculator.html
+
+--- INSTALLMENT LOANS ---
+  ✅ Auto & Student Loan Calculator       → auto-student-loan-calculator.html
+  ✅ Compound Interest Calculator         → compound-interest-calculator.html
+  [ ] Auto Loan Refinance Calculator      → still to build
+
+--- RETIREMENT & SAVINGS ---
+  ✅ FIRE Number Calculator               → fire-number-calculator.html
+     - Variable withdrawal rate slider (2-8%), break-even, portfolio growth chart,
+       withdrawal rate comparison table
+  ✅ CoastFI Calculator                   → coastfi-calculator.html
+     - CoastFI number, years to coast, two-path chart, passive income inputs,
+       Semi-FIRE scenarios table, retirement age comparison table
+  ✅ 401k Rollover Comparison             → 401k-rollover-calculator.html
+     - Side-by-side fee comparison, portfolio growth chart, cumulative fee chart,
+       "fee savings invested" metric, year-by-year table
+  ✅ Budget Allocation Calculator         → budget-allocation-calculator.html
+     - 50/30/20 scorecard, bar chart vs targets, donut chart, category breakdown,
+       5 budget framework comparisons (50/30/20, 70/20/10, 80/20, etc.)
+  [ ] Net Worth Tracker                   → still to build
+  [ ] Down Payment Savings Calculator     → still to build
+  [ ] Extra Payment / Accelerated Payoff Calculator → still to build
+       - Works for any loan (mortgage, auto, student)
+       - Inputs: balance, rate, term, extra monthly payment amount
+       - Outputs: months/years saved, interest saved, side-by-side payoff chart
+
+How to use calculators once on a paid plan:
+- Files are already on GitHub Pages — just need to embed via iframe in WordPress
+- Each calculator gets its own Page (not Post)
+- Create a "Financial Calculators" parent page as a hub
+- Each calculator page needs ~300 words of SEO content around the tool
+- Add "Calculators" to your nav menu via Appearance → Menus
+- iFrames are blocked on WordPress.com FREE — works once you upgrade to paid
+
+YOUTUBE
+- You don't need a separate platform — just paste a YouTube URL into a WordPress post
+  and it embeds automatically
+- Ideas: "walk through" videos of your calculators, personal finance tips, book reviews
+- YouTube drives traffic back to your blog and vice versa
+
+PODCAST
+- Host audio on Buzzsprout (free tier up to 2 hours/month) or Transistor (~$19/month)
+- Both give you an embeddable player to paste into your WordPress pages
+- Good for commuters — extends your reach beyond readers
+- Topics: same as your blog posts, or interview other personal finance bloggers
+
+SEO BASICS
+- Write for your niche: mortgage tips, budgeting, investing, book reviews
+- Use your calculators as "pillar content" — they attract consistent search traffic
+- Internal links: link your posts to your calculator pages and vice versa
+- Each post should target a specific search phrase (e.g., "how to recast a mortgage")
+
+
+===== WHAT TO DO FIRST (PRIORITY ORDER) =====
+
+Right now, on the free plan:
+  [ ] Sign up for MailerLite and add a newsletter form to your blog
+  [ ] Sign up for Amazon Associates and add affiliate links to book review posts
+  [ ] Keep publishing content consistently
+
+Self-hosted site is now live — action items:
+  [x] Set up UpdraftPlus → Google Drive backup
+  [x] Calculators already on GitHub Pages (shockingchris.github.io/youngbudgeteer-site/)
+  [ ] Create a "Financial Calculators" hub page in WordPress
+  [ ] Embed calculators via iframe on their own pages
+      NOTE: iFrame embed template was built in a prior session — check conversation
+      history or ask Claude to rebuild it. Each calculator page needs ~300 words
+      of SEO content + the iframe pointing to its GitHub Pages URL.
+  [ ] Add "Calculators" to your nav menu (Appearance → Menus)
+  [ ] Apply for Google AdSense
+
+When traffic grows (10k+ monthly visitors):
+  [ ] Research investing platform affiliate programs (M1, Betterment, YNAB)
+  [ ] Start a YouTube channel or podcast if you're interested
+  [ ] Work toward Mediavine threshold (50k sessions/month)
+
+
+===== TOOLS & PLATFORMS SUMMARY =====
+
+Email:        MailerLite (free to 1,000 subs) → mailerlite.com
+Affiliates:   Amazon Associates, ShareASale, Impact (networks with finance brands)
+Display ads:  Google AdSense (start) → Mediavine (goal)
+Backup:       UpdraftPlus plugin + Google Drive
+Calculator hosting: GitHub Pages (free)
+Podcast audio: Buzzsprout (free tier) or Transistor (~$19/mo)
+YouTube:      Just paste video URL into WordPress post — embeds automatically
+
+
+===== WORDPRESS PLUGINS =====
+
+Already installed: UpdraftPlus (backups), Wordfence (security)
+
+--- ESSENTIAL / FOUNDATION ---
+
+  Yoast SEO (or Rank Math)         On-page SEO, sitemaps, meta descriptions
+                                   Rank Math is more generous on the free tier
+  WP Super Cache (or W3 Total Cache)  Page caching so your server doesn't die under load
+  Smush (or ShortPixel)            Compress/optimize images automatically on upload
+
+--- CONTENT & WRITING ---
+
+  TablePress                       Clean HTML tables without fighting the block editor
+  Code Embed                       Embed raw HTML/JS files — critical for your calculators
+  WP Code (Insert Headers/Footers) Add scripts/CSS globally without editing theme files
+
+--- EMAIL / NEWSLETTER ---
+
+  MailerLite (official plugin)     Connect your MailerLite signup forms directly in WordPress
+  WPForms Lite                     Flexible contact/signup forms if you need more control
+
+--- MONETIZATION ---
+
+  Ad Inserter                      Control exactly where ads appear (AdSense now, Mediavine later)
+  ThirstyAffiliates                Cloak, manage, and track affiliate links (Bookshop.org, M1, etc.)
+  Pretty Links                     Simpler alternative to ThirstyAffiliates for link shortening
+
+--- PERFORMANCE & ANALYTICS ---
+
+  Google Site Kit                  Connect Search Console + Analytics from the WP dashboard
+  Autoptimize                      Minify CSS/JS/HTML — pairs well with a caching plugin
+  Cloudflare (official)            If routing through Cloudflare, syncs cache purging
+
+--- FUTURE: PODCAST / VIDEO ---
+
+  Seriously Simple Podcasting      Podcast management + player if you self-host audio
+  PowerPress                       Alternative podcast plugin, Blubrry-connected
+
+--- QUALITY OF LIFE ---
+
+  Akismet Anti-Spam                Comment spam filtering (free for personal blogs)
+  Redirection                      Manage 301 redirects — essential after migrating from WordPress.com
+  WP Revision Control              Limits revision bloat in the database
+  Health Check & Troubleshooting   Diagnose plugin conflicts without taking the site down
+
+Priority install order:
+  1. SEO plugin (Rank Math or Yoast)
+  2. Caching plugin (WP Super Cache)
+  3. Image optimization (Smush)
+  4. Code Embed (to get calculators working via iframe)
+  5. ThirstyAffiliates (for affiliate link management)
+  6. MailerLite plugin (for newsletter signups)
+  Everything else as you need it — don't over-install upfront.
+
+
+=============================================
+This plan was built with Claude Code. Save this file somewhere you won't lose it.
